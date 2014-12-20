@@ -50,7 +50,7 @@ namespace TCPEchoServer
 
             }
 
-            System.Console.WriteLine("acceptCompleted");
+            System.Console.WriteLine("acceptArgs_Completed");
 
 
             startReceive(args);
@@ -69,22 +69,26 @@ namespace TCPEchoServer
             bool willRaiseEvent = receiveArgs.AcceptSocket.ReceiveAsync(receiveArgs);
         }
 
-        void receiveArgs_Completed(object sender, SocketAsyncEventArgs receiveSendEventArgs)
+        private void receiveArgs_Completed(object sender, SocketAsyncEventArgs receiveSendEventArgs)
         {
             if (receiveSendEventArgs.SocketError != SocketError.Success)
             {
                 return;
             }
 
-            System.Console.WriteLine("receiveSendEventArgs_Completed");
+            System.Console.WriteLine("receiveArgs_Completed");
             if (receiveSendEventArgs.BytesTransferred == 0)
             {
                 return;
             }
 
             System.Console.WriteLine("transferred = {0}", receiveSendEventArgs.BytesTransferred);
-
+            processPacket(receiveSendEventArgs);
             startReceive(receiveSendEventArgs);
+        }
+        private void processPacket(SocketAsyncEventArgs args)
+        {
+
         }
     }
 }
