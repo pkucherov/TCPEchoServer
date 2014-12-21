@@ -68,8 +68,54 @@ namespace TCPEchoClient
             Buffer.BlockCopy(dataBuffer, 0, messageBuffer, headerBuffer.Length, dataBuffer.Length);
             receiveSendEventArgs.SetBuffer(messageBuffer, 0, nSize);
                         
-            receiveSendEventArgs.AcceptSocket.SendAsync(receiveSendEventArgs);             
+            receiveSendEventArgs.AcceptSocket.SendAsync(receiveSendEventArgs);
 
+            startReceive(receiveSendEventArgs);
+        }
+
+        private void startReceive(SocketAsyncEventArgs args)
+        {
+            SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
+            receiveArgs.Completed += receiveArgs_Completed;
+            receiveArgs.AcceptSocket = args.AcceptSocket;
+            receiveArgs.UserToken = "abb";
+            //args.AcceptSocket = null;
+            byte[] a = new byte[100];
+            receiveArgs.SetBuffer(a, 0, 100);
+            bool willRaiseEvent = receiveArgs.AcceptSocket.ReceiveAsync(receiveArgs);
+        }
+
+        private void receiveArgs_Completed(object sender, SocketAsyncEventArgs receiveSendEventArgs)
+        {
+            if (receiveSendEventArgs.SocketError != SocketError.Success)
+            {
+                return;
+            }
+
+            System.Console.WriteLine("receiveArgs_Completed");
+            if (receiveSendEventArgs.BytesTransferred == 0)
+            {
+                return;
+            }
+
+            System.Console.WriteLine("transferred = {0}", receiveSendEventArgs.BytesTransferred);
+            processPacket(receiveSendEventArgs);
+            startReceive(receiveSendEventArgs);
+        }
+        private void processPacket(SocketAsyncEventArgs args)
+        {
+            DataPacketHeader dph = new DataPacketHeader();
+
+            if (args.Buffer != null)
+            {
+                dph.Deserialize(args.Buffer);
+                DataPacket dp = new DataPacket();
+                byte[] buffer = new byte[dph.StringSize];
+                Buffer.BlockCopy(args.Buffer, Marshal.SizeOf(typeof(DataPacketHeader)), buffer, 0, dph.StringSize);
+                dp.Deserialize(buffer);
+            }
+
+            startSend(args);
         }
     }
 }

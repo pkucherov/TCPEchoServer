@@ -56,9 +56,7 @@ namespace TCPEchoServer
 
             System.Console.WriteLine("acceptArgs_Completed");
 
-
-            startReceive(args);
-
+            startReceive(args);           
         }
 
         private void startReceive(SocketAsyncEventArgs args)
@@ -92,16 +90,51 @@ namespace TCPEchoServer
         }
         private void processPacket(SocketAsyncEventArgs args)
         {
-            DataPacketHeader dph = new DataPacketHeader();          
+            DataPacketHeader dph = new DataPacketHeader();
+            DataPacket dp = new DataPacket();
 
             if (args.Buffer != null)
             {
                 dph.Deserialize(args.Buffer);
-                DataPacket dp = new DataPacket();
+                
                 byte[] buffer = new byte[dph.StringSize];
                 Buffer.BlockCopy(args.Buffer, Marshal.SizeOf(typeof(DataPacketHeader)), buffer, 0, dph.StringSize);
                 dp.Deserialize(buffer);
-            }
+            }           
+        }
+
+        private void startSend(SocketAsyncEventArgs args)
+        {   
+            SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
+            sendArgs.Completed += sendArgs_Completed;
+            sendArgs.AcceptSocket = args.AcceptSocket;
+            sendArgs.UserToken = "abb";
+            //args.AcceptSocket = null;       
+            
+            DataPacket dp = new DataPacket();
+            dp.Data = "asdfghjkljhjhghgfgfdfgTEST TEST2";
+            byte[] dataBuffer = dp.Serialize();
+            
+            DataPacketHeader dph = new DataPacketHeader();
+
+            dph.MagicKey = 0xFFACBBFA;
+            dph.Version = 0x0100;
+            dph.StringSize = dataBuffer.Length;
+                       
+            byte[] headerBuffer = dph.Serialize();
+            int nSize = dataBuffer.Length + headerBuffer.Length;
+            byte[] messageBuffer = new byte[nSize];
+
+            // BlockCopy(Array src, int srcOffset, Array dst, int dstOffset, int count);
+            Buffer.BlockCopy(headerBuffer, 0, messageBuffer, 0, headerBuffer.Length);
+            Buffer.BlockCopy(dataBuffer, 0, messageBuffer, headerBuffer.Length, dataBuffer.Length);
+            sendArgs.SetBuffer(messageBuffer, 0, nSize);
+
+            sendArgs.AcceptSocket.SendAsync(sendArgs);       
+        }
+        private void sendArgs_Completed(object sender, SocketAsyncEventArgs sendEventArgs)
+        {
+
         }
     }
 }
