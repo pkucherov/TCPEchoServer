@@ -21,7 +21,14 @@ namespace TCPEchoClient
             connectArgs.Completed += connectArgs_Completed;
             Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socket.ConnectAsync(connectArgs);
+        }
 
+        public void SendData(string strData)
+        {
+            //SocketAsyncEventArgs receiveSendEventArgs = new SocketAsyncEventArgs();
+            //receiveSendEventArgs.AcceptSocket = connectArgs.ConnectSocket;
+            //receiveSendEventArgs.Completed += receiveSendEventArgs_Completed;
+            //startSend(receiveSendEventArgs);
         }
 
         private void connectArgs_Completed(object sender, SocketAsyncEventArgs connectArgs)
@@ -105,17 +112,17 @@ namespace TCPEchoClient
         private void processPacket(SocketAsyncEventArgs args)
         {
             DataPacketHeader dph = new DataPacketHeader();
+            DataPacket dp = new DataPacket();
 
             if (args.Buffer != null)
             {
-                dph.Deserialize(args.Buffer);
-                DataPacket dp = new DataPacket();
+                dph.Deserialize(args.Buffer);                
                 byte[] buffer = new byte[dph.StringSize];
                 Buffer.BlockCopy(args.Buffer, Marshal.SizeOf(typeof(DataPacketHeader)), buffer, 0, dph.StringSize);
                 dp.Deserialize(buffer);
             }
 
-            startSend(args);
+            Console.WriteLine(dp.Data);
         }
     }
 }

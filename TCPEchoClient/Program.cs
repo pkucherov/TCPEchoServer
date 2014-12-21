@@ -9,8 +9,12 @@ namespace TCPEchoClient
         {
             EchoClient echoClient = new EchoClient();
             int nPort = 2030;
-            echoClient.Connect(new IPEndPoint(IPAddress.Parse("192.168.1.3"), nPort));            
-            string strData = Console.ReadLine();
+            echoClient.Connect(new IPEndPoint(IPAddress.Parse("192.168.1.3"), nPort));
+            for (; ; )
+            {
+                string strData = Console.ReadLine();
+                echoClient.SendData(strData);
+            }
         }
     }
 }

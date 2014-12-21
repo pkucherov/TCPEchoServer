@@ -14,6 +14,8 @@ namespace TCPEchoServer
         ConcurrentStack<SocketAsyncEventArgs> _acceptArgsStack;
         ConcurrentStack<SocketAsyncEventArgs> _receiveArgsStack;
 
+        BlockingCollection<Socket> _clientCollection = new BlockingCollection<Socket>();
+
         public BaseServer()
         {
             _acceptArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
@@ -55,6 +57,8 @@ namespace TCPEchoServer
             }
 
             System.Console.WriteLine("acceptArgs_Completed");
+
+            _clientCollection.Add(args.AcceptSocket);
 
             startReceive(args);
         }
@@ -101,35 +105,39 @@ namespace TCPEchoServer
                 Buffer.BlockCopy(args.Buffer, Marshal.SizeOf(typeof(DataPacketHeader)), buffer, 0, dph.StringSize);
                 dp.Deserialize(buffer);
             }
+            startSend(args);
         }
 
         private void startSend(SocketAsyncEventArgs args)
         {
-            SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
-            sendArgs.Completed += sendArgs_Completed;
-            sendArgs.AcceptSocket = args.AcceptSocket;
-            sendArgs.UserToken = "abb";
-            //args.AcceptSocket = null;       
+            foreach (Socket client in _clientCollection)
+            {
+                SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
+                sendArgs.Completed += sendArgs_Completed;
+                sendArgs.AcceptSocket = client;
+                sendArgs.UserToken = "abb";
+                //args.AcceptSocket = null;       
 
-            DataPacket dp = new DataPacket();
-            dp.Data = "asdfghjkljhjhghgfgfdfgTEST TEST2";
-            byte[] dataBuffer = dp.Serialize();
+                DataPacket dp = new DataPacket();
+                dp.Data = "asdfghjkljhjhghgfgfdfgTEST TEST2";
+                byte[] dataBuffer = dp.Serialize();
 
-            DataPacketHeader dph = new DataPacketHeader();
+                DataPacketHeader dph = new DataPacketHeader();
 
-            dph.MagicKey = 0xFFACBBFA;
-            dph.Version = 0x0100;
-            dph.StringSize = dataBuffer.Length;
+                dph.MagicKey = 0xFFACBBFA;
+                dph.Version = 0x0100;
+                dph.StringSize = dataBuffer.Length;
 
-            byte[] headerBuffer = dph.Serialize();
-            int nSize = dataBuffer.Length + headerBuffer.Length;
-            byte[] messageBuffer = new byte[nSize];
+                byte[] headerBuffer = dph.Serialize();
+                int nSize = dataBuffer.Length + headerBuffer.Length;
+                byte[] messageBuffer = new byte[nSize];
 
-            Buffer.BlockCopy(headerBuffer, 0, messageBuffer, 0, headerBuffer.Length);
-            Buffer.BlockCopy(dataBuffer, 0, messageBuffer, headerBuffer.Length, dataBuffer.Length);
-            sendArgs.SetBuffer(messageBuffer, 0, nSize);
+                Buffer.BlockCopy(headerBuffer, 0, messageBuffer, 0, headerBuffer.Length);
+                Buffer.BlockCopy(dataBuffer, 0, messageBuffer, headerBuffer.Length, dataBuffer.Length);
+                sendArgs.SetBuffer(messageBuffer, 0, nSize);
 
-            sendArgs.AcceptSocket.SendAsync(sendArgs);
+                sendArgs.AcceptSocket.SendAsync(sendArgs);
+            }
         }
         private void sendArgs_Completed(object sender, SocketAsyncEventArgs sendEventArgs)
         {
