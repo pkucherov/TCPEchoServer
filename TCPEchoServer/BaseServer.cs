@@ -14,11 +14,21 @@ namespace TCPEchoServer
         ConcurrentStack<SocketAsyncEventArgs> _acceptArgsStack;
         ConcurrentStack<SocketAsyncEventArgs> _receiveArgsStack;
 
+        const int nMaxAccept = 1000;
+
         BlockingCollection<Socket> _clientCollection = new BlockingCollection<Socket>();
 
         public BaseServer()
         {
             _acceptArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
+            for (int i = 0; i < nMaxAccept; i++)
+            {
+                SocketAsyncEventArgs acceptArgs = new SocketAsyncEventArgs();
+                acceptArgs.Completed += new EventHandler<SocketAsyncEventArgs>(acceptArgs_Completed);
+
+                _acceptArgsStack.Push(acceptArgs);
+            }
+
             _receiveArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
         }
 
@@ -40,9 +50,13 @@ namespace TCPEchoServer
 
         private bool startAccept()
         {
-            SocketAsyncEventArgs acceptArgs = new SocketAsyncEventArgs();
-            acceptArgs.Completed += new EventHandler<SocketAsyncEventArgs>(acceptArgs_Completed);
-            acceptArgs.UserToken = "hghghg";
+            SocketAsyncEventArgs acceptArgs;
+            if (!_acceptArgsStack.TryPop(out acceptArgs))
+            {
+                acceptArgs = new SocketAsyncEventArgs();
+                acceptArgs.Completed += new EventHandler<SocketAsyncEventArgs>(acceptArgs_Completed);
+            }
+            
             bool bRet = _listener.AcceptAsync(acceptArgs);
             return bRet;
         }
@@ -59,8 +73,10 @@ namespace TCPEchoServer
             System.Console.WriteLine("acceptArgs_Completed");
 
             _clientCollection.Add(args.AcceptSocket);
-
             startReceive(args);
+
+            args.AcceptSocket = null;
+            _acceptArgsStack.Push(args);            
         }
 
         private void startReceive(SocketAsyncEventArgs args)
@@ -105,10 +121,10 @@ namespace TCPEchoServer
                 Buffer.BlockCopy(args.Buffer, Marshal.SizeOf(typeof(DataPacketHeader)), buffer, 0, dph.StringSize);
                 dp.Deserialize(buffer);
             }
-            startSend(args);
+            startSend(args, dp);
         }
 
-        private void startSend(SocketAsyncEventArgs args)
+        private void startSend(SocketAsyncEventArgs args, DataPacket dpForSend)
         {
             foreach (Socket client in _clientCollection)
             {
@@ -118,8 +134,7 @@ namespace TCPEchoServer
                 sendArgs.UserToken = "abb";
                 //args.AcceptSocket = null;       
 
-                DataPacket dp = new DataPacket();
-                dp.Data = "asdfghjkljhjhghgfgfdfgTEST TEST2";
+                DataPacket dp = dpForSend;           
                 byte[] dataBuffer = dp.Serialize();
 
                 DataPacketHeader dph = new DataPacketHeader();
@@ -142,6 +157,6 @@ namespace TCPEchoServer
         private void sendArgs_Completed(object sender, SocketAsyncEventArgs sendEventArgs)
         {
 
-        }
+        }     
     }
 }
