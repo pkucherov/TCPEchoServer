@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Collections.Concurrent;
+using Common;
 
 namespace TCPEchoServer
 {
@@ -92,7 +93,16 @@ namespace TCPEchoServer
         }
         private void processPacket(SocketAsyncEventArgs args)
         {
+            DataPacket dp = new DataPacket();
+            dp.MagicKey = 0xFFAC;
+            dp.Version = 0x01;
+            dp.StringSize = 10;
+            dp.Data = "123456";
 
+            if (args.Buffer != null)
+            {
+                dp.Deserialize(args.Buffer);
+            }
         }
     }
 }

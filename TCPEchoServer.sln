@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TCPEchoServer", "TCPEchoServer\TCPEchoServer.csproj", "{0CBDB4E0-5CAD-4CAD-90F5-CD1FF48E4E78}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{43993F4E-DEF6-43BE-9449-7A8B30D9E185}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{0CBDB4E0-5CAD-4CAD-90F5-CD1FF48E4E78}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0CBDB4E0-5CAD-4CAD-90F5-CD1FF48E4E78}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0CBDB4E0-5CAD-4CAD-90F5-CD1FF48E4E78}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43993F4E-DEF6-43BE-9449-7A8B30D9E185}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43993F4E-DEF6-43BE-9449-7A8B30D9E185}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43993F4E-DEF6-43BE-9449-7A8B30D9E185}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43993F4E-DEF6-43BE-9449-7A8B30D9E185}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
