@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Collections.Concurrent;
 using Common;
+using System.Runtime.InteropServices;
 
 namespace TCPEchoServer
 {
@@ -24,10 +25,8 @@ namespace TCPEchoServer
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _listener.Bind(ipe);
             int backlog = 100;
-            _listener.Listen(backlog);
-
-            // Start an asynchronous socket to listen for connections.
-            Console.WriteLine("Waiting for a connection...");
+            _listener.Listen(backlog);                
+         
             bool bRet = startAccept();
 
             if (!bRet)
@@ -93,15 +92,15 @@ namespace TCPEchoServer
         }
         private void processPacket(SocketAsyncEventArgs args)
         {
-            DataPacket dp = new DataPacket();
-            dp.MagicKey = 0xFFAC;
-            dp.Version = 0x01;
-            dp.StringSize = 10;
-            dp.Data = "123456";
+            DataPacketHeader dph = new DataPacketHeader();          
 
             if (args.Buffer != null)
             {
-                dp.Deserialize(args.Buffer);
+                dph.Deserialize(args.Buffer);
+                DataPacket dp = new DataPacket();
+                byte[] buffer = new byte[dph.StringSize];
+                Buffer.BlockCopy(args.Buffer, Marshal.SizeOf(typeof(DataPacketHeader)), buffer, 0, dph.StringSize);
+                dp.Deserialize(buffer);
             }
         }
     }
