@@ -40,10 +40,12 @@ namespace TCPEchoClient
                 return;
             }
 
-            //SocketAsyncEventArgs receiveSendEventArgs = new SocketAsyncEventArgs();
-            //receiveSendEventArgs.AcceptSocket = connectArgs.ConnectSocket;
-            //receiveSendEventArgs.Completed += receiveSendEventArgs_Completed;
+            SocketAsyncEventArgs receiveSendEventArgs = new SocketAsyncEventArgs();
+            receiveSendEventArgs.AcceptSocket = connectArgs.ConnectSocket;
+            receiveSendEventArgs.Completed += receiveArgs_Completed;
             //startSend(receiveSendEventArgs);
+
+            startReceive(receiveSendEventArgs);
         }
 
         void receiveSendEventArgs_Completed(object sender, SocketAsyncEventArgs receiveSendEventArgs)
