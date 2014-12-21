@@ -9,6 +9,7 @@ namespace TCPEchoClient
 {
     class EchoClient
     {
+        Socket _socket;
         public EchoClient()
         {
 
@@ -19,16 +20,16 @@ namespace TCPEchoClient
             SocketAsyncEventArgs connectArgs = new SocketAsyncEventArgs();
             connectArgs.RemoteEndPoint = ipe;
             connectArgs.Completed += connectArgs_Completed;
-            Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.ConnectAsync(connectArgs);
+            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _socket.ConnectAsync(connectArgs);
         }
 
         public void SendData(string strData)
         {
-            //SocketAsyncEventArgs receiveSendEventArgs = new SocketAsyncEventArgs();
-            //receiveSendEventArgs.AcceptSocket = connectArgs.ConnectSocket;
-            //receiveSendEventArgs.Completed += receiveSendEventArgs_Completed;
-            //startSend(receiveSendEventArgs);
+            SocketAsyncEventArgs receiveSendEventArgs = new SocketAsyncEventArgs();
+            receiveSendEventArgs.AcceptSocket = _socket;
+            receiveSendEventArgs.Completed += receiveSendEventArgs_Completed;
+            startSend(receiveSendEventArgs, strData);
         }
 
         private void connectArgs_Completed(object sender, SocketAsyncEventArgs connectArgs)
@@ -39,10 +40,10 @@ namespace TCPEchoClient
                 return;
             }
 
-            SocketAsyncEventArgs receiveSendEventArgs = new SocketAsyncEventArgs();
-            receiveSendEventArgs.AcceptSocket = connectArgs.ConnectSocket;
-            receiveSendEventArgs.Completed += receiveSendEventArgs_Completed;
-            startSend(receiveSendEventArgs);
+            //SocketAsyncEventArgs receiveSendEventArgs = new SocketAsyncEventArgs();
+            //receiveSendEventArgs.AcceptSocket = connectArgs.ConnectSocket;
+            //receiveSendEventArgs.Completed += receiveSendEventArgs_Completed;
+            //startSend(receiveSendEventArgs);
         }
 
         void receiveSendEventArgs_Completed(object sender, SocketAsyncEventArgs receiveSendEventArgs)
@@ -54,10 +55,10 @@ namespace TCPEchoClient
             Console.WriteLine("receiveSendEventArgs_Completed");
         }
 
-        private void startSend(SocketAsyncEventArgs receiveSendEventArgs)
+        private void startSend(SocketAsyncEventArgs receiveSendEventArgs, string strData)
         {
             DataPacket dp = new DataPacket();
-            dp.Data = "asdfghjkljhjhghgfgfdfgTEST TEST2";
+            dp.Data = strData;
             byte[] dataBuffer = dp.Serialize();
             
             DataPacketHeader dph = new DataPacketHeader();
