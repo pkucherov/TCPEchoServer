@@ -113,10 +113,10 @@ namespace TCPEchoServer
             if (!_receiveArgsStack.TryPop(out receiveArgs))
             {
                 receiveArgs = new SocketAsyncEventArgs();
-                receiveArgs.Completed += receiveArgs_Completed;                
+                receiveArgs.Completed += receiveArgs_Completed;                                
                 
-                byte[] a = new byte[100];
-                receiveArgs.SetBuffer(a, 0, 100);
+                var segment = _bufferManager.GetBuffer();
+                receiveArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
             }
 
             receiveArgs.AcceptSocket = args.AcceptSocket;
@@ -167,6 +167,8 @@ namespace TCPEchoServer
                 if (!_sendArgsStack.TryPop(out sendArgs))
                 {
                     sendArgs = new SocketAsyncEventArgs();
+                    var segment = _bufferManager.GetBuffer();
+                    sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
                     sendArgs.Completed += sendArgs_Completed;                                                       
                 }
                 sendArgs.AcceptSocket = client;
@@ -186,8 +188,8 @@ namespace TCPEchoServer
 
                 Buffer.BlockCopy(headerBuffer, 0, messageBuffer, 0, headerBuffer.Length);
                 Buffer.BlockCopy(dataBuffer, 0, messageBuffer, headerBuffer.Length, dataBuffer.Length);
-                sendArgs.SetBuffer(messageBuffer, 0, nSize);
-
+                Buffer.BlockCopy(messageBuffer, 0, sendArgs.Buffer, sendArgs.Offset, messageBuffer.Length);
+                
                 sendArgs.AcceptSocket.SendAsync(sendArgs);
             }
         }
