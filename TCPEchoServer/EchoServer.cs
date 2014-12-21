@@ -2,16 +2,20 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Collections.Concurrent;
 
 namespace TCPEchoServer
 {
     class EchoServer
     {
         Socket _listener;
+        ConcurrentStack<SocketAsyncEventArgs> _acceptArgsStack;
+        ConcurrentStack<SocketAsyncEventArgs> _receiveArgsStack;
 
         public EchoServer()
         {
-
+            _acceptArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
+            _receiveArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
         }
 
         public void Start(IPEndPoint ipe)

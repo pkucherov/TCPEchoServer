@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Net;
 
 namespace TCPEchoServer
 {
@@ -10,6 +7,11 @@ namespace TCPEchoServer
     {
         static void Main(string[] args)
         {
+            EchoServer echoServer = new EchoServer();
+            int nPort = 2030;
+            echoServer.Start(new IPEndPoint(IPAddress.Any, nPort));
+            Console.WriteLine("Waiting for connection");
+            Console.ReadLine();
         }
     }
 }
