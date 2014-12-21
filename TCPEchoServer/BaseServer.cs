@@ -105,12 +105,13 @@ namespace TCPEchoServer
             if (!_receiveArgsStack.TryPop(out receiveArgs))
             {
                 receiveArgs = new SocketAsyncEventArgs();
-                receiveArgs.Completed += receiveArgs_Completed;
-                receiveArgs.AcceptSocket = args.AcceptSocket;
+                receiveArgs.Completed += receiveArgs_Completed;                
                 
                 byte[] a = new byte[100];
                 receiveArgs.SetBuffer(a, 0, 100);
             }
+
+            receiveArgs.AcceptSocket = args.AcceptSocket;
             bool willRaiseEvent = receiveArgs.AcceptSocket.ReceiveAsync(receiveArgs);
         }
 
@@ -154,11 +155,13 @@ namespace TCPEchoServer
         {
             foreach (Socket client in _clientCollection)
             {
-                SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
-                sendArgs.Completed += sendArgs_Completed;
+                SocketAsyncEventArgs sendArgs;
+                if (!_sendArgsStack.TryPop(out sendArgs))
+                {
+                    sendArgs = new SocketAsyncEventArgs();
+                    sendArgs.Completed += sendArgs_Completed;                                                       
+                }
                 sendArgs.AcceptSocket = client;
-                sendArgs.UserToken = "abb";
-                //args.AcceptSocket = null;       
 
                 DataPacket dp = dpForSend;           
                 byte[] dataBuffer = dp.Serialize();
@@ -182,7 +185,8 @@ namespace TCPEchoServer
         }
         private void sendArgs_Completed(object sender, SocketAsyncEventArgs sendEventArgs)
         {
-
+            sendEventArgs.AcceptSocket = null;
+            _sendArgsStack.Push(sendEventArgs);
         }     
     }
 }
