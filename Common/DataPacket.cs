@@ -28,9 +28,12 @@ namespace Common
             return buffer;
         }
 
-        public void Deserialize(byte[] data)
+        public void Deserialize(byte[] data, int offset, int count)
         {
-            GCHandle gcHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
+            byte[] newdata = new byte[count];
+            Buffer.BlockCopy(data, offset, newdata, 0, count);
+
+            GCHandle gcHandle = GCHandle.Alloc(newdata, GCHandleType.Pinned);
             this = (DataPacketHeader)Marshal.PtrToStructure(gcHandle.AddrOfPinnedObject(), typeof(DataPacketHeader));
             gcHandle.Free();
         }

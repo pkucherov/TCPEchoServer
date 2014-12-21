@@ -14,7 +14,9 @@ namespace TCPEchoServer
         ConcurrentStack<SocketAsyncEventArgs> _acceptArgsStack;
         ConcurrentStack<SocketAsyncEventArgs> _receiveArgsStack;
         ConcurrentStack<SocketAsyncEventArgs> _sendArgsStack;
+        BufferManager _bufferManager;
 
+        const int nBufferSize = 100;
         const int nMaxAccept = 100;
         const int nMaxSendReceive = 100;
 
@@ -30,14 +32,18 @@ namespace TCPEchoServer
 
                 _acceptArgsStack.Push(acceptArgs);
             }
+            
+            _bufferManager = new BufferManager(2 * nMaxSendReceive, nBufferSize);
 
             _receiveArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
             for (int i = 0; i < nMaxSendReceive; i++)
             {                
                 SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
                 receiveArgs.Completed += receiveArgs_Completed;
-                byte[] buf = new byte[100];
-                receiveArgs.SetBuffer(buf, 0, 100);
+                //byte[] buf = new byte[100];
+                //receiveArgs.SetBuffer(buf, 0, 100);
+                var segment = _bufferManager.GetBuffer(); 
+                receiveArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
                 _receiveArgsStack.Push(receiveArgs);
             }
 
@@ -46,10 +52,12 @@ namespace TCPEchoServer
             {               
                 SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
                 sendArgs.Completed += sendArgs_Completed;
-                byte[] buf = new byte[100];
-                sendArgs.SetBuffer(buf, 0, 100);
+                //byte[] buf = new byte[100];
+                //sendArgs.SetBuffer(buf, 0, 100);
+                var segment = _bufferManager.GetBuffer();
+                sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
                 _sendArgsStack.Push(sendArgs);
-            }
+            }           
         }
 
         public void Start(IPEndPoint ipe)
@@ -142,10 +150,10 @@ namespace TCPEchoServer
 
             if (args.Buffer != null)
             {
-                dph.Deserialize(args.Buffer);
+                dph.Deserialize(args.Buffer, args.Offset, args.Count);
 
                 byte[] buffer = new byte[dph.StringSize];
-                Buffer.BlockCopy(args.Buffer, Marshal.SizeOf(typeof(DataPacketHeader)), buffer, 0, dph.StringSize);
+                Buffer.BlockCopy(args.Buffer, args.Offset + Marshal.SizeOf(typeof(DataPacketHeader)), buffer, 0, dph.StringSize);
                 dp.Deserialize(buffer);
             }
             startSend(args, dp);

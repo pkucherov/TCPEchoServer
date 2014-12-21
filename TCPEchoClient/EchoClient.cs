@@ -117,7 +117,7 @@ namespace TCPEchoClient
 
             if (args.Buffer != null)
             {
-                dph.Deserialize(args.Buffer);                
+                dph.Deserialize(args.Buffer, args.Offset, args.Count);                
                 byte[] buffer = new byte[dph.StringSize];
                 Buffer.BlockCopy(args.Buffer, Marshal.SizeOf(typeof(DataPacketHeader)), buffer, 0, dph.StringSize);
                 dp.Deserialize(buffer);
