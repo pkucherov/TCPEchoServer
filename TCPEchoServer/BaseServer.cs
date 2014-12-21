@@ -13,8 +13,10 @@ namespace TCPEchoServer
         Socket _listener;
         ConcurrentStack<SocketAsyncEventArgs> _acceptArgsStack;
         ConcurrentStack<SocketAsyncEventArgs> _receiveArgsStack;
+        ConcurrentStack<SocketAsyncEventArgs> _sendArgsStack;
 
-        const int nMaxAccept = 1000;
+        const int nMaxAccept = 100;
+        const int nMaxSendReceive = 100;
 
         BlockingCollection<Socket> _clientCollection = new BlockingCollection<Socket>();
 
@@ -30,6 +32,24 @@ namespace TCPEchoServer
             }
 
             _receiveArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
+            for (int i = 0; i < nMaxSendReceive; i++)
+            {                
+                SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
+                receiveArgs.Completed += receiveArgs_Completed;
+                byte[] buf = new byte[100];
+                receiveArgs.SetBuffer(buf, 0, 100);
+                _receiveArgsStack.Push(receiveArgs);
+            }
+
+            _sendArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
+            for (int i = 0; i < nMaxSendReceive; i++)
+            {               
+                SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
+                sendArgs.Completed += sendArgs_Completed;
+                byte[] buf = new byte[100];
+                sendArgs.SetBuffer(buf, 0, 100);
+                _sendArgsStack.Push(sendArgs);
+            }
         }
 
         public void Start(IPEndPoint ipe)
@@ -81,32 +101,38 @@ namespace TCPEchoServer
 
         private void startReceive(SocketAsyncEventArgs args)
         {
-            SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
-            receiveArgs.Completed += receiveArgs_Completed;
-            receiveArgs.AcceptSocket = args.AcceptSocket;
-            receiveArgs.UserToken = "abb";
-            args.AcceptSocket = null;
-            byte[] a = new byte[100];
-            receiveArgs.SetBuffer(a, 0, 100);
+            SocketAsyncEventArgs receiveArgs;
+            if (!_receiveArgsStack.TryPop(out receiveArgs))
+            {
+                receiveArgs = new SocketAsyncEventArgs();
+                receiveArgs.Completed += receiveArgs_Completed;
+                receiveArgs.AcceptSocket = args.AcceptSocket;
+                
+                byte[] a = new byte[100];
+                receiveArgs.SetBuffer(a, 0, 100);
+            }
             bool willRaiseEvent = receiveArgs.AcceptSocket.ReceiveAsync(receiveArgs);
         }
 
-        private void receiveArgs_Completed(object sender, SocketAsyncEventArgs receiveSendEventArgs)
+        private void receiveArgs_Completed(object sender, SocketAsyncEventArgs receiveArgs)
         {
-            if (receiveSendEventArgs.SocketError != SocketError.Success)
+            if (receiveArgs.SocketError != SocketError.Success)
             {
                 return;
             }
 
             System.Console.WriteLine("receiveArgs_Completed");
-            if (receiveSendEventArgs.BytesTransferred == 0)
+            if (receiveArgs.BytesTransferred == 0)
             {
                 return;
             }
 
-            System.Console.WriteLine("transferred = {0}", receiveSendEventArgs.BytesTransferred);
-            processPacket(receiveSendEventArgs);
-            startReceive(receiveSendEventArgs);
+            System.Console.WriteLine("transferred = {0}", receiveArgs.BytesTransferred);
+            processPacket(receiveArgs);
+            startReceive(receiveArgs);
+
+            receiveArgs.AcceptSocket = null;
+            _receiveArgsStack.Push(receiveArgs);
         }
         private void processPacket(SocketAsyncEventArgs args)
         {
