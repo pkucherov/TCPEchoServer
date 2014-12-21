@@ -16,14 +16,16 @@ namespace TCPEchoServer
         ConcurrentStack<SocketAsyncEventArgs> _sendArgsStack;
         BufferManager _bufferManager;
 
-        const int nBufferSize = 100;
+        const int nBufferSize = 15;
         const int nMaxAccept = 100;
         const int nMaxSendReceive = 100;
+        private readonly int nPacketHeaderSize;
 
         BlockingCollection<Socket> _clientCollection = new BlockingCollection<Socket>();
 
         public BaseServer()
         {
+            nPacketHeaderSize = Marshal.SizeOf(typeof(DataPacketHeader));
             _acceptArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
             for (int i = 0; i < nMaxAccept; i++)
             {
@@ -44,6 +46,7 @@ namespace TCPEchoServer
                 //receiveArgs.SetBuffer(buf, 0, 100);
                 var segment = _bufferManager.GetBuffer(); 
                 receiveArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
+                receiveArgs.UserToken = new DataUserToken();
                 _receiveArgsStack.Push(receiveArgs);
             }
 
@@ -56,6 +59,7 @@ namespace TCPEchoServer
                 //sendArgs.SetBuffer(buf, 0, 100);
                 var segment = _bufferManager.GetBuffer();
                 sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
+                sendArgs.UserToken = new DataUserToken();
                 _sendArgsStack.Push(sendArgs);
             }           
         }
@@ -120,6 +124,11 @@ namespace TCPEchoServer
             }
 
             receiveArgs.AcceptSocket = args.AcceptSocket;
+            if (args.UserToken != null)
+            {
+                receiveArgs.UserToken = args.UserToken;
+            }
+
             bool willRaiseEvent = receiveArgs.AcceptSocket.ReceiveAsync(receiveArgs);
         }
 
@@ -145,18 +154,69 @@ namespace TCPEchoServer
         }
         private void processPacket(SocketAsyncEventArgs args)
         {
+            DataUserToken token = (DataUserToken)args.UserToken;
+            bool bDataPacketReaded = false;
+            int nProcessedDataCount = 0;
             DataPacketHeader dph = new DataPacketHeader();
             DataPacket dp = new DataPacket();
-
-            if (args.Buffer != null)
+            if (!token.IsHeaderReaded)
             {
-                dph.Deserialize(args.Buffer, args.Offset, args.Count);
-
-                byte[] buffer = new byte[dph.StringSize];
-                Buffer.BlockCopy(args.Buffer, args.Offset + Marshal.SizeOf(typeof(DataPacketHeader)), buffer, 0, dph.StringSize);
-                dp.Deserialize(buffer);
+                if (args.BytesTransferred >= nPacketHeaderSize)
+                {
+                    if (args.Buffer != null)
+                    {
+                        dph.Deserialize(args.Buffer, args.Offset, args.Count);
+                        token.IsHeaderReaded = true;
+                        token.ProcessedDataCount += nPacketHeaderSize;
+                        nProcessedDataCount += nPacketHeaderSize;
+                        token.DataPacketHeader = dph;
+                    }
+                }
             }
-            startSend(args, dp);
+            else
+            {
+                dph = token.DataPacketHeader;
+            }
+
+            if (args.BytesTransferred >= token.ProcessedDataCount + dph.StringSize)
+            {
+                if (args.Buffer != null)
+                {
+                    byte[] buffer = new byte[dph.StringSize];
+                    Buffer.BlockCopy(args.Buffer, args.Offset + Marshal.SizeOf(typeof(DataPacketHeader)), buffer, 0, dph.StringSize);
+
+                    dp.Deserialize(buffer);
+                    bDataPacketReaded = true;
+                }
+            }
+            else
+            {
+                if (args.Buffer != null)
+                {
+                    byte[] buffer = null;
+                    if (token.ReadedData == null)
+                    {
+                        buffer = new byte[dph.StringSize];
+                        token.ReadedData = buffer;
+                    }
+
+                    Buffer.BlockCopy(args.Buffer, args.Offset + nProcessedDataCount, token.ReadedData,
+                        token.ReadedDataOffset, args.BytesTransferred - nProcessedDataCount);
+                    token.ReadedDataOffset += args.BytesTransferred - nProcessedDataCount;
+                    token.ProcessedDataCount += args.BytesTransferred - nProcessedDataCount;
+                    if (token.ProcessedDataCount >= dph.StringSize + nPacketHeaderSize)
+                    {
+                        dp.Deserialize(token.ReadedData);
+                        bDataPacketReaded = true;
+                    }
+                }
+            }
+
+            if (bDataPacketReaded)
+            {
+                token.Reset();
+                startSend(args, dp);
+            }
         }
 
         private void startSend(SocketAsyncEventArgs args, DataPacket dpForSend)
