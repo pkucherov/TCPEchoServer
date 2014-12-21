@@ -16,7 +16,7 @@ namespace TCPEchoServer
         ConcurrentStack<SocketAsyncEventArgs> _sendArgsStack;
         BufferManager _bufferManager;
 
-        const int nBufferSize = 15;
+        const int nBufferSize = 100;
         const int nMaxAccept = 100;
         const int nMaxSendReceive = 100;
         private readonly int nPacketHeaderSize;
@@ -41,12 +41,10 @@ namespace TCPEchoServer
             for (int i = 0; i < nMaxSendReceive; i++)
             {                
                 SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
-                receiveArgs.Completed += receiveArgs_Completed;
-                //byte[] buf = new byte[100];
-                //receiveArgs.SetBuffer(buf, 0, 100);
+                receiveArgs.Completed += receiveArgs_Completed;               
                 var segment = _bufferManager.GetBuffer(); 
                 receiveArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
-                receiveArgs.UserToken = new DataUserToken();
+                receiveArgs.UserToken = new ReceiveUserToken();
                 _receiveArgsStack.Push(receiveArgs);
             }
 
@@ -54,12 +52,10 @@ namespace TCPEchoServer
             for (int i = 0; i < nMaxSendReceive; i++)
             {               
                 SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
-                sendArgs.Completed += sendArgs_Completed;
-                //byte[] buf = new byte[100];
-                //sendArgs.SetBuffer(buf, 0, 100);
+                sendArgs.Completed += sendArgs_Completed;               
                 var segment = _bufferManager.GetBuffer();
                 sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
-                sendArgs.UserToken = new DataUserToken();
+                sendArgs.UserToken = new SendUserToken();
                 _sendArgsStack.Push(sendArgs);
             }           
         }
@@ -154,7 +150,7 @@ namespace TCPEchoServer
         }
         private void processPacket(SocketAsyncEventArgs args)
         {
-            DataUserToken token = (DataUserToken)args.UserToken;
+            ReceiveUserToken token = (ReceiveUserToken)args.UserToken;
             bool bDataPacketReaded = false;
             int nProcessedDataCount = 0;
             DataPacketHeader dph = new DataPacketHeader();
@@ -194,19 +190,19 @@ namespace TCPEchoServer
                 if (args.Buffer != null)
                 {
                     byte[] buffer = null;
-                    if (token.ReadedData == null)
+                    if (token.ReadData == null)
                     {
                         buffer = new byte[dph.StringSize];
-                        token.ReadedData = buffer;
+                        token.ReadData = buffer;
                     }
 
-                    Buffer.BlockCopy(args.Buffer, args.Offset + nProcessedDataCount, token.ReadedData,
-                        token.ReadedDataOffset, args.BytesTransferred - nProcessedDataCount);
-                    token.ReadedDataOffset += args.BytesTransferred - nProcessedDataCount;
+                    Buffer.BlockCopy(args.Buffer, args.Offset + nProcessedDataCount, token.ReadData,
+                        token.ReadDataOffset, args.BytesTransferred - nProcessedDataCount);
+                    token.ReadDataOffset += args.BytesTransferred - nProcessedDataCount;
                     token.ProcessedDataCount += args.BytesTransferred - nProcessedDataCount;
                     if (token.ProcessedDataCount >= dph.StringSize + nPacketHeaderSize)
                     {
-                        dp.Deserialize(token.ReadedData);
+                        dp.Deserialize(token.ReadData);
                         bDataPacketReaded = true;
                     }
                 }
@@ -232,6 +228,10 @@ namespace TCPEchoServer
                     sendArgs.Completed += sendArgs_Completed;                                                       
                 }
                 sendArgs.AcceptSocket = client;
+                if (args.UserToken != null)
+                {
+                    sendArgs.UserToken = args.UserToken;
+                }
 
                 DataPacket dp = dpForSend;           
                 byte[] dataBuffer = dp.Serialize();

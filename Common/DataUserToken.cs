@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 
 namespace Common
 {
-    public class DataUserToken
+    public class ReceiveUserToken
     {
         public int ProcessedDataCount { get; set; }
         public bool IsHeaderReaded { get; set; }
         public DataPacketHeader DataPacketHeader { get; set; }
-        public byte[] ReadedData { get; set; }
-        public int ReadedDataOffset { get; set; }
+        public byte[] ReadData { get; set; }
+        public int ReadDataOffset { get; set; }
 
-        public DataUserToken()
+        public ReceiveUserToken()
         {
             ProcessedDataCount = 0;
             IsHeaderReaded = false;
@@ -24,8 +24,27 @@ namespace Common
         {
             IsHeaderReaded = false;
             ProcessedDataCount = 0;
-            ReadedData = null;
-            ReadedDataOffset = 0;
+            ReadData = null;
+            ReadDataOffset = 0;
+        }
+    }
+
+    public class SendUserToken
+    {
+        public int ProcessedDataCount { get; set; }        
+        public byte[] DataToSend { get; set; }
+        public int SentDataOffset { get; set; }
+
+        public SendUserToken()
+        {
+            ProcessedDataCount = 0;           
+        }
+
+        public void Reset()
+        {            
+            ProcessedDataCount = 0;
+            DataToSend = null;
+            SentDataOffset = 0;
         }
     }
 }
