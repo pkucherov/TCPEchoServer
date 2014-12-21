@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Net;
 
 namespace TCPEchoClient
 {
@@ -10,6 +7,10 @@ namespace TCPEchoClient
     {
         static void Main(string[] args)
         {
+            EchoClient echoClient = new EchoClient();
+            int nPort = 2030;
+            echoClient.Connect(new IPEndPoint(IPAddress.Parse("192.168.1.3"), nPort));            
+            string strData = Console.ReadLine();
         }
     }
 }
