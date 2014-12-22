@@ -168,8 +168,7 @@ namespace Common
             }
         }
         protected virtual void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
-        {
-            Console.WriteLine("base received = {0}", dp.Data);
+        {            
         }
 
         protected void sendDataPacket(SocketAsyncEventArgs sendArgs)
@@ -205,7 +204,7 @@ namespace Common
 
                 int nLength = token.ProcessedDataRemains <= nBufferSize ? token.ProcessedDataRemains : nBufferSize;
                 Buffer.BlockCopy(token.DataToSend, token.SentDataOffset, sendArgs.Buffer,
-                    sendArgs.Offset/* + token.SentDataOffset*/, nLength);
+                    sendArgs.Offset, nLength);
 
                 token.SentDataOffset += nLength;
                 token.ProcessedDataRemains -= nLength;
