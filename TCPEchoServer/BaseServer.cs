@@ -275,6 +275,10 @@ namespace TCPEchoServer
 
                 token.SentDataOffset += nLength;
                 token.ProcessedDataRemains -= nLength;
+                if (token.ProcessedDataRemains == 0)
+                {
+                    token.Reset();
+                }
             }
 
             sendArgs.AcceptSocket.SendAsync(sendArgs);
