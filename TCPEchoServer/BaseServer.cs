@@ -7,7 +7,7 @@ using Common;
 using System.Runtime.InteropServices;
 
 namespace TCPEchoServer
-{   
+{
     abstract class BaseServer
     {
         Socket _listener;
@@ -16,9 +16,9 @@ namespace TCPEchoServer
         ConcurrentStack<SocketAsyncEventArgs> _sendArgsStack;
         BufferManager _bufferManager;
 
-        const int nBufferSize = 100;
+        const int nBufferSize = 20;
         const int nMaxAccept = 100;
-        const int nMaxSendReceive = 100;
+        const int nMaxSendReceive = 50000;
         private readonly int nPacketHeaderSize;
 
         BlockingCollection<Socket> _clientCollection = new BlockingCollection<Socket>();
@@ -34,15 +34,15 @@ namespace TCPEchoServer
 
                 _acceptArgsStack.Push(acceptArgs);
             }
-            
+
             _bufferManager = new BufferManager(2 * nMaxSendReceive, nBufferSize);
 
             _receiveArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
             for (int i = 0; i < nMaxSendReceive; i++)
-            {                
+            {
                 SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
-                receiveArgs.Completed += receiveArgs_Completed;               
-                var segment = _bufferManager.GetBuffer(); 
+                receiveArgs.Completed += receiveArgs_Completed;
+                var segment = _bufferManager.GetBuffer();
                 receiveArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
                 receiveArgs.UserToken = new ReceiveUserToken();
                 _receiveArgsStack.Push(receiveArgs);
@@ -50,14 +50,14 @@ namespace TCPEchoServer
 
             _sendArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
             for (int i = 0; i < nMaxSendReceive; i++)
-            {               
+            {
                 SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
-                sendArgs.Completed += sendArgs_Completed;               
+                sendArgs.Completed += sendArgs_Completed;
                 var segment = _bufferManager.GetBuffer();
                 sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
                 sendArgs.UserToken = new SendUserToken();
                 _sendArgsStack.Push(sendArgs);
-            }           
+            }
         }
 
         public void Start(IPEndPoint ipe)
@@ -84,7 +84,7 @@ namespace TCPEchoServer
                 acceptArgs = new SocketAsyncEventArgs();
                 acceptArgs.Completed += new EventHandler<SocketAsyncEventArgs>(acceptArgs_Completed);
             }
-            
+
             bool bRet = _listener.AcceptAsync(acceptArgs);
             return bRet;
         }
@@ -104,7 +104,7 @@ namespace TCPEchoServer
             startReceive(args);
 
             args.AcceptSocket = null;
-            _acceptArgsStack.Push(args);            
+            _acceptArgsStack.Push(args);
         }
 
         private void startReceive(SocketAsyncEventArgs args)
@@ -113,8 +113,8 @@ namespace TCPEchoServer
             if (!_receiveArgsStack.TryPop(out receiveArgs))
             {
                 receiveArgs = new SocketAsyncEventArgs();
-                receiveArgs.Completed += receiveArgs_Completed;                                
-                
+                receiveArgs.Completed += receiveArgs_Completed;
+
                 var segment = _bufferManager.GetBuffer();
                 receiveArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
             }
@@ -225,15 +225,25 @@ namespace TCPEchoServer
                     sendArgs = new SocketAsyncEventArgs();
                     var segment = _bufferManager.GetBuffer();
                     sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
-                    sendArgs.Completed += sendArgs_Completed;                                                       
+                    sendArgs.Completed += sendArgs_Completed;
                 }
                 sendArgs.AcceptSocket = client;
-                if (args.UserToken != null)
-                {
-                    sendArgs.UserToken = args.UserToken;
-                }
+                //if (args.UserToken != null)
+                //{
+                //    sendArgs.UserToken = args.UserToken;
+                //}
+                SendUserToken token = (SendUserToken)sendArgs.UserToken;
+                token.DataPacket = dpForSend;
+                sendDataPacket(sendArgs);
+            }
+        }
 
-                DataPacket dp = dpForSend;           
+        private static void sendDataPacket(SocketAsyncEventArgs sendArgs)
+        {
+            SendUserToken token = (SendUserToken)sendArgs.UserToken;
+            if (token.DataToSend == null)
+            {
+                DataPacket dp = token.DataPacket;
                 byte[] dataBuffer = dp.Serialize();
 
                 DataPacketHeader dph = new DataPacketHeader();
@@ -244,19 +254,48 @@ namespace TCPEchoServer
 
                 byte[] headerBuffer = dph.Serialize();
                 int nSize = dataBuffer.Length + headerBuffer.Length;
-                byte[] messageBuffer = new byte[nSize];
-
-                Buffer.BlockCopy(headerBuffer, 0, messageBuffer, 0, headerBuffer.Length);
-                Buffer.BlockCopy(dataBuffer, 0, messageBuffer, headerBuffer.Length, dataBuffer.Length);
-                Buffer.BlockCopy(messageBuffer, 0, sendArgs.Buffer, sendArgs.Offset, messageBuffer.Length);
-                
-                sendArgs.AcceptSocket.SendAsync(sendArgs);
+                byte[] packetBuffer = new byte[nSize];
+                Buffer.BlockCopy(headerBuffer, 0, packetBuffer, 0, headerBuffer.Length);
+                Buffer.BlockCopy(dataBuffer, 0, packetBuffer, headerBuffer.Length, dataBuffer.Length);
+                token.DataToSend = packetBuffer;
+                token.SentDataOffset = 0;
+                token.ProcessedDataRemains = packetBuffer.Length;
             }
+            if (token.ProcessedDataRemains <= nBufferSize && token.SentDataOffset == 0) //data packet fully fit in send buffer
+            {
+                Buffer.BlockCopy(token.DataToSend, 0, sendArgs.Buffer, sendArgs.Offset, token.DataToSend.Length);
+                token.Reset();
+            }
+            else
+            {// need to separate data packet into several buffers               
+
+                int nLength = token.ProcessedDataRemains <= nBufferSize ? token.ProcessedDataRemains : nBufferSize;
+                Buffer.BlockCopy(token.DataToSend, token.SentDataOffset, sendArgs.Buffer,
+                    sendArgs.Offset + token.SentDataOffset, nLength);
+
+                token.SentDataOffset += nLength;
+                token.ProcessedDataRemains -= nLength;
+            }
+
+            sendArgs.AcceptSocket.SendAsync(sendArgs);
         }
-        private void sendArgs_Completed(object sender, SocketAsyncEventArgs sendEventArgs)
+        private void sendArgs_Completed(object sender, SocketAsyncEventArgs sendArgs)
         {
-            sendEventArgs.AcceptSocket = null;
-            _sendArgsStack.Push(sendEventArgs);
-        }     
+            SendUserToken token = (SendUserToken)sendArgs.UserToken;
+
+            if (token.ProcessedDataRemains > 0)
+            {
+                SocketAsyncEventArgs sendArgsNew;
+                if (!_sendArgsStack.TryPop(out sendArgsNew))
+                {
+
+                }
+                sendArgsNew.AcceptSocket = sendArgs.AcceptSocket;
+                sendArgsNew.UserToken = token;
+                sendDataPacket(sendArgsNew);                
+            }
+            sendArgs.AcceptSocket = null;
+            _sendArgsStack.Push(sendArgs);
+        }
     }
 }

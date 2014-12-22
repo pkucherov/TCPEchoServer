@@ -31,20 +31,22 @@ namespace Common
 
     public class SendUserToken
     {
-        public int ProcessedDataCount { get; set; }        
+        public int ProcessedDataRemains { get; set; }        
         public byte[] DataToSend { get; set; }
         public int SentDataOffset { get; set; }
 
+        public DataPacket DataPacket { get; set; }
+
         public SendUserToken()
         {
-            ProcessedDataCount = 0;           
+            ProcessedDataRemains = 0;           
         }
 
         public void Reset()
-        {            
-            ProcessedDataCount = 0;
+        {
+            ProcessedDataRemains = 0;
             DataToSend = null;
-            SentDataOffset = 0;
+            SentDataOffset = 0;            
         }
     }
 }
