@@ -80,10 +80,10 @@ namespace TCPEchoServer
         protected override void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
         {
             Console.WriteLine("server received = {0}", dp.Data);
-            startSend(args, dp);
+            startSend(dp);
         }
 
-        private void startSend(SocketAsyncEventArgs args, DataPacket dpForSend)
+        private void startSend(DataPacket dpForSend)
         {
             foreach (Socket client in _clientCollection)
             {
@@ -95,12 +95,10 @@ namespace TCPEchoServer
                     //sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
                     //sendArgs.Completed += sendArgs_Completed;
                 }
+            
                 Debug.Assert(sendArgs.UserToken.GetType() == typeof(SendUserToken));
                 sendArgs.AcceptSocket = client;
-                //if (args.UserToken != null)
-                //{
-                //    sendArgs.UserToken = args.UserToken;
-                //}
+            
                 SendUserToken token = (SendUserToken)sendArgs.UserToken;
                 token.DataPacket = dpForSend;
                 sendDataPacket(sendArgs);

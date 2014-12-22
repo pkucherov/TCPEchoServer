@@ -249,10 +249,11 @@ namespace Common
 
                 sendCompleted(sendArgsNew);
             }
+
             sendArgs.AcceptSocket = null;
+//            token.Reset();
+            sendArgs.UserToken = new SendUserToken();
             _sendArgsStack.Push(sendArgs);
-
         }
-
     }
 }
