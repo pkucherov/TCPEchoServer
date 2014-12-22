@@ -87,21 +87,28 @@ namespace TCPEchoServer
         {
             foreach (Socket client in _clientCollection)
             {
-                SocketAsyncEventArgs sendArgs;
-                if (!_sendArgsStack.TryPop(out sendArgs))
+                if (client.Connected)
                 {
-                    //sendArgs = new SocketAsyncEventArgs();
-                    //var segment = _bufferManager.GetBuffer();
-                    //sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
-                    //sendArgs.Completed += sendArgs_Completed;
+                    SocketAsyncEventArgs sendArgs;
+                    if (!_sendArgsStack.TryPop(out sendArgs))
+                    {
+                        //sendArgs = new SocketAsyncEventArgs();
+                        //var segment = _bufferManager.GetBuffer();
+                        //sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
+                        //sendArgs.Completed += sendArgs_Completed;
+                    }
+
+                    Debug.Assert(sendArgs.UserToken.GetType() == typeof(SendUserToken));
+                    sendArgs.AcceptSocket = client;
+
+                    SendUserToken token = (SendUserToken)sendArgs.UserToken;
+                    token.DataPacket = dpForSend;
+                    sendDataPacket(sendArgs);
                 }
-            
-                Debug.Assert(sendArgs.UserToken.GetType() == typeof(SendUserToken));
-                sendArgs.AcceptSocket = client;
-            
-                SendUserToken token = (SendUserToken)sendArgs.UserToken;
-                token.DataPacket = dpForSend;
-                sendDataPacket(sendArgs);
+                else
+                {
+                    
+                }
             }
         }
         
