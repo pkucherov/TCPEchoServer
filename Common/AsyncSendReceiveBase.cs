@@ -61,7 +61,7 @@ namespace Common
             receiveArgs.AcceptSocket = args.AcceptSocket;
             if (args.UserToken != null)
             {
-                //receiveArgs.UserToken = args.UserToken;
+                receiveArgs.UserToken = args.UserToken;
             }
 
             bool willRaiseEvent = receiveArgs.AcceptSocket.ReceiveAsync(receiveArgs);
