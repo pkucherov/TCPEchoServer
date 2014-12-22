@@ -39,6 +39,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsyncSendReceiveBase.cs" />
     <Compile Include="BufferManager.cs" />
     <Compile Include="DataPacket.cs" />
     <Compile Include="DataUserToken.cs" />

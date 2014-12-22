@@ -8,17 +8,13 @@ using System.Runtime.InteropServices;
 
 namespace TCPEchoServer
 {
-    abstract class BaseServer
+    abstract class BaseServer : AsyncSendReceiveBase
     {
         Socket _listener;
         ConcurrentStack<SocketAsyncEventArgs> _acceptArgsStack;
-        ConcurrentStack<SocketAsyncEventArgs> _receiveArgsStack;
-        ConcurrentStack<SocketAsyncEventArgs> _sendArgsStack;
-        BufferManager _bufferManager;
-
-        const int nBufferSize = 20;
+      
         const int nMaxAccept = 100;
-        const int nMaxSendReceive = 50000;
+        
         private readonly int nPacketHeaderSize;
 
         BlockingCollection<Socket> _clientCollection = new BlockingCollection<Socket>();
@@ -33,31 +29,7 @@ namespace TCPEchoServer
                 acceptArgs.Completed += new EventHandler<SocketAsyncEventArgs>(acceptArgs_Completed);
 
                 _acceptArgsStack.Push(acceptArgs);
-            }
-
-            _bufferManager = new BufferManager(2 * nMaxSendReceive, nBufferSize);
-
-            _receiveArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
-            for (int i = 0; i < nMaxSendReceive; i++)
-            {
-                SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
-                receiveArgs.Completed += receiveArgs_Completed;
-                var segment = _bufferManager.GetBuffer();
-                receiveArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
-                receiveArgs.UserToken = new ReceiveUserToken();
-                _receiveArgsStack.Push(receiveArgs);
-            }
-
-            _sendArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
-            for (int i = 0; i < nMaxSendReceive; i++)
-            {
-                SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
-                sendArgs.Completed += sendArgs_Completed;
-                var segment = _bufferManager.GetBuffer();
-                sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
-                sendArgs.UserToken = new SendUserToken();
-                _sendArgsStack.Push(sendArgs);
-            }
+            }          
         }
 
         public void Start(IPEndPoint ipe)
