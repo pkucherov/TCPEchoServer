@@ -5,6 +5,7 @@ using System.Threading;
 using System.Collections.Concurrent;
 using Common;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace TCPEchoServer
 {
@@ -75,13 +76,7 @@ namespace TCPEchoServer
             args.AcceptSocket = null;
             _acceptArgsStack.Push(args);
         }       
-                
-        protected override void receiveCompleted(SocketAsyncEventArgs receiveArgs)
-        {
-            processPacket(receiveArgs);
-            startReceive(receiveArgs);
-        }        
-
+      
         protected override void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
         {
             startSend(args, dp);
@@ -99,6 +94,7 @@ namespace TCPEchoServer
                     //sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
                     //sendArgs.Completed += sendArgs_Completed;
                 }
+                Debug.Assert(sendArgs.UserToken.GetType() == typeof(SendUserToken));
                 sendArgs.AcceptSocket = client;
                 //if (args.UserToken != null)
                 //{

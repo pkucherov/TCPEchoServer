@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using Common;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 
 namespace TCPEchoClient
@@ -30,6 +31,7 @@ namespace TCPEchoClient
             if (!_sendArgsStack.TryPop(out sendArgs))
             { 
             }
+            Debug.Assert(sendArgs.UserToken.GetType() == typeof(SendUserToken));
 
             sendArgs.AcceptSocket = _socket;
             startSend(sendArgs, strData);
@@ -55,6 +57,7 @@ namespace TCPEchoClient
             if (!_receiveArgsStack.TryPop(out receiveArgs))
             {
             }
+            Debug.Assert(receiveArgs.UserToken.GetType() == typeof(ReceiveUserToken));
             receiveArgs.AcceptSocket = connectArgs.ConnectSocket;
 
             startReceive(receiveArgs);
@@ -73,11 +76,7 @@ namespace TCPEchoClient
             startReceive(sendArgs);
         }
       
-        protected override void receiveCompleted(SocketAsyncEventArgs receiveArgs)
-        {
-            processPacket(receiveArgs);
-            startReceive(receiveArgs);
-        }     
+     
 
         protected override void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
         {

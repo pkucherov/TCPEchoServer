@@ -3,6 +3,7 @@ using System.Net;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace Common
 {
@@ -12,7 +13,7 @@ namespace Common
         protected ConcurrentStack<SocketAsyncEventArgs> _sendArgsStack;
         protected BufferManager _bufferManager;
 
-        protected const int nBufferSize = 20;
+        protected const int nBufferSize = 100;
         protected const int nMaxSendReceive = 50000;
         protected readonly int nPacketHeaderSize;
 
@@ -48,6 +49,24 @@ namespace Common
         {
 
         }
+        protected void startReceive(SocketAsyncEventArgs args)
+        {
+            SocketAsyncEventArgs receiveArgs;
+            if (!_receiveArgsStack.TryPop(out receiveArgs))
+            {
+
+            }
+            Debug.Assert(receiveArgs.UserToken.GetType() == typeof(ReceiveUserToken));
+
+            receiveArgs.AcceptSocket = args.AcceptSocket;
+            if (args.UserToken != null)
+            {
+                //receiveArgs.UserToken = args.UserToken;
+            }
+
+            bool willRaiseEvent = receiveArgs.AcceptSocket.ReceiveAsync(receiveArgs);
+        }
+
         private void receiveArgs_Completed(object sender, SocketAsyncEventArgs receiveArgs)
         {
             if (receiveArgs.SocketError != SocketError.Success)
@@ -69,49 +88,19 @@ namespace Common
             _receiveArgsStack.Push(receiveArgs);
 
         }
-
-        protected abstract void receiveCompleted(SocketAsyncEventArgs receiveArgs);
+  
+        protected virtual void receiveCompleted(SocketAsyncEventArgs receiveArgs)
+        {
+            processPacket(receiveArgs);
+            startReceive(receiveArgs);
+        } 
         
 
-        private void sendArgs_Completed(object sender, SocketAsyncEventArgs sendArgs)
-        {
-            SendUserToken token = (SendUserToken)sendArgs.UserToken;
-
-            if (token.ProcessedDataRemains > 0)
-            {
-                SocketAsyncEventArgs sendArgsNew;
-                if (!_sendArgsStack.TryPop(out sendArgsNew))
-                {
-
-                }
-                sendArgsNew.AcceptSocket = sendArgs.AcceptSocket;
-                sendArgsNew.UserToken = token;
-              
-                sendCompleted(sendArgsNew);
-            }
-            sendArgs.AcceptSocket = null;
-            _sendArgsStack.Push(sendArgs);
-
-        }
+       
 
         protected abstract void sendCompleted(SocketAsyncEventArgs sendArgs);
        
-        protected void startReceive(SocketAsyncEventArgs args)
-        {
-            SocketAsyncEventArgs receiveArgs;
-            if (!_receiveArgsStack.TryPop(out receiveArgs))
-            {
-               
-            }
-
-            receiveArgs.AcceptSocket = args.AcceptSocket;
-            if (args.UserToken != null)
-            {
-                receiveArgs.UserToken = args.UserToken;
-            }
-
-            bool willRaiseEvent = receiveArgs.AcceptSocket.ReceiveAsync(receiveArgs);
-        }
+   
 
         protected void processPacket(SocketAsyncEventArgs args)
         {
@@ -228,5 +217,29 @@ namespace Common
 
             sendArgs.AcceptSocket.SendAsync(sendArgs);
         }
+
+        private void sendArgs_Completed(object sender, SocketAsyncEventArgs sendArgs)
+        {
+            SendUserToken token = (SendUserToken)sendArgs.UserToken;
+
+            if (token.ProcessedDataRemains > 0)
+            {
+                SocketAsyncEventArgs sendArgsNew;
+                if (!_sendArgsStack.TryPop(out sendArgsNew))
+                {
+
+                }
+                Debug.Assert(sendArgsNew.UserToken.GetType() == typeof(SendUserToken));
+
+                sendArgsNew.AcceptSocket = sendArgs.AcceptSocket;
+                sendArgsNew.UserToken = token;
+
+                sendCompleted(sendArgsNew);
+            }
+            sendArgs.AcceptSocket = null;
+            _sendArgsStack.Push(sendArgs);
+
+        }
+
     }
 }
