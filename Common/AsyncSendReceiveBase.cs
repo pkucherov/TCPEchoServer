@@ -46,12 +46,52 @@ namespace Common
         }
         private void receiveArgs_Completed(object sender, SocketAsyncEventArgs receiveArgs)
         {
+            if (receiveArgs.SocketError != SocketError.Success)
+            {
+                return;
+            }
+
+            System.Console.WriteLine("receiveArgs_Completed");
+            if (receiveArgs.BytesTransferred == 0)
+            {
+                return;
+            }
+
+            System.Console.WriteLine("transferred = {0}", receiveArgs.BytesTransferred);
+            //processPacket(receiveArgs);
+            //startReceive(receiveArgs);
+            receiveCompleted(receiveArgs);
+
+            receiveArgs.AcceptSocket = null;
+            _receiveArgsStack.Push(receiveArgs);
 
         }
+
+        protected abstract void receiveCompleted(SocketAsyncEventArgs receiveArgs);
+        
 
         private void sendArgs_Completed(object sender, SocketAsyncEventArgs sendArgs)
         {
+            SendUserToken token = (SendUserToken)sendArgs.UserToken;
+
+            if (token.ProcessedDataRemains > 0)
+            {
+                SocketAsyncEventArgs sendArgsNew;
+                if (!_sendArgsStack.TryPop(out sendArgsNew))
+                {
+
+                }
+                sendArgsNew.AcceptSocket = sendArgs.AcceptSocket;
+                sendArgsNew.UserToken = token;
+                //sendDataPacket(sendArgsNew);
+                sendCompleted(sendArgsNew);
+            }
+            sendArgs.AcceptSocket = null;
+            _sendArgsStack.Push(sendArgs);
 
         }
+
+        protected abstract void sendCompleted(SocketAsyncEventArgs sendArgs);
+       
     }
 }

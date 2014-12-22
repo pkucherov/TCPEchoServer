@@ -53,8 +53,8 @@ namespace TCPEchoServer
             SocketAsyncEventArgs acceptArgs;
             if (!_acceptArgsStack.TryPop(out acceptArgs))
             {
-                acceptArgs = new SocketAsyncEventArgs();
-                acceptArgs.Completed += new EventHandler<SocketAsyncEventArgs>(acceptArgs_Completed);
+                //acceptArgs = new SocketAsyncEventArgs();
+                //acceptArgs.Completed += new EventHandler<SocketAsyncEventArgs>(acceptArgs_Completed);
             }
 
             bool bRet = _listener.AcceptAsync(acceptArgs);
@@ -84,11 +84,11 @@ namespace TCPEchoServer
             SocketAsyncEventArgs receiveArgs;
             if (!_receiveArgsStack.TryPop(out receiveArgs))
             {
-                receiveArgs = new SocketAsyncEventArgs();
-                receiveArgs.Completed += receiveArgs_Completed;
+                //receiveArgs = new SocketAsyncEventArgs();
+                //receiveArgs.Completed += receiveArgs_Completed;
 
-                var segment = _bufferManager.GetBuffer();
-                receiveArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
+                //var segment = _bufferManager.GetBuffer();
+                //receiveArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
             }
 
             receiveArgs.AcceptSocket = args.AcceptSocket;
@@ -100,26 +100,32 @@ namespace TCPEchoServer
             bool willRaiseEvent = receiveArgs.AcceptSocket.ReceiveAsync(receiveArgs);
         }
 
-        private void receiveArgs_Completed(object sender, SocketAsyncEventArgs receiveArgs)
+        //private void receiveArgs_Completed(object sender, SocketAsyncEventArgs receiveArgs)
+        //{
+        //    if (receiveArgs.SocketError != SocketError.Success)
+        //    {
+        //        return;
+        //    }
+
+        //    System.Console.WriteLine("receiveArgs_Completed");
+        //    if (receiveArgs.BytesTransferred == 0)
+        //    {
+        //        return;
+        //    }
+
+        //    System.Console.WriteLine("transferred = {0}", receiveArgs.BytesTransferred);
+        //    processPacket(receiveArgs);
+        //    startReceive(receiveArgs);
+
+        //    receiveArgs.AcceptSocket = null;
+        //    _receiveArgsStack.Push(receiveArgs);
+        //}
+        protected override void receiveCompleted(SocketAsyncEventArgs receiveArgs)
         {
-            if (receiveArgs.SocketError != SocketError.Success)
-            {
-                return;
-            }
-
-            System.Console.WriteLine("receiveArgs_Completed");
-            if (receiveArgs.BytesTransferred == 0)
-            {
-                return;
-            }
-
-            System.Console.WriteLine("transferred = {0}", receiveArgs.BytesTransferred);
             processPacket(receiveArgs);
             startReceive(receiveArgs);
-
-            receiveArgs.AcceptSocket = null;
-            _receiveArgsStack.Push(receiveArgs);
         }
+
         private void processPacket(SocketAsyncEventArgs args)
         {
             ReceiveUserToken token = (ReceiveUserToken)args.UserToken;
@@ -194,10 +200,10 @@ namespace TCPEchoServer
                 SocketAsyncEventArgs sendArgs;
                 if (!_sendArgsStack.TryPop(out sendArgs))
                 {
-                    sendArgs = new SocketAsyncEventArgs();
-                    var segment = _bufferManager.GetBuffer();
-                    sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
-                    sendArgs.Completed += sendArgs_Completed;
+                    //sendArgs = new SocketAsyncEventArgs();
+                    //var segment = _bufferManager.GetBuffer();
+                    //sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
+                    //sendArgs.Completed += sendArgs_Completed;
                 }
                 sendArgs.AcceptSocket = client;
                 //if (args.UserToken != null)
@@ -210,7 +216,7 @@ namespace TCPEchoServer
             }
         }
 
-        private static void sendDataPacket(SocketAsyncEventArgs sendArgs)
+        private void sendDataPacket(SocketAsyncEventArgs sendArgs)
         {
             SendUserToken token = (SendUserToken)sendArgs.UserToken;
             if (token.DataToSend == null)
@@ -255,23 +261,28 @@ namespace TCPEchoServer
 
             sendArgs.AcceptSocket.SendAsync(sendArgs);
         }
-        private void sendArgs_Completed(object sender, SocketAsyncEventArgs sendArgs)
+        //private void sendArgs_Completed(object sender, SocketAsyncEventArgs sendArgs)
+        //{
+        //    SendUserToken token = (SendUserToken)sendArgs.UserToken;
+
+        //    if (token.ProcessedDataRemains > 0)
+        //    {
+        //        SocketAsyncEventArgs sendArgsNew;
+        //        if (!_sendArgsStack.TryPop(out sendArgsNew))
+        //        {
+
+        //        }
+        //        sendArgsNew.AcceptSocket = sendArgs.AcceptSocket;
+        //        sendArgsNew.UserToken = token;
+        //        sendDataPacket(sendArgsNew);                
+        //    }
+        //    sendArgs.AcceptSocket = null;
+        //    _sendArgsStack.Push(sendArgs);
+        //}
+
+        protected override void sendCompleted(SocketAsyncEventArgs sendArgs)
         {
-            SendUserToken token = (SendUserToken)sendArgs.UserToken;
-
-            if (token.ProcessedDataRemains > 0)
-            {
-                SocketAsyncEventArgs sendArgsNew;
-                if (!_sendArgsStack.TryPop(out sendArgsNew))
-                {
-
-                }
-                sendArgsNew.AcceptSocket = sendArgs.AcceptSocket;
-                sendArgsNew.UserToken = token;
-                sendDataPacket(sendArgsNew);                
-            }
-            sendArgs.AcceptSocket = null;
-            _sendArgsStack.Push(sendArgs);
+            sendDataPacket(sendArgs);
         }
     }
 }
