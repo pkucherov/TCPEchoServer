@@ -4,10 +4,23 @@ using System.Net.Sockets;
 using Common;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 
 namespace TCPEchoClient
 {
+    static class SocketExtensions
+    {
+        public static bool IsConnected(this Socket socket)
+        {
+            try
+            {
+                return !(socket.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
+            }
+            catch (SocketException) { return false; }
+        }
+    }
+
     class EchoClient : AsyncSendReceiveBase
     {
         private Socket _socket;
@@ -22,7 +35,7 @@ namespace TCPEchoClient
             connectArgs.RemoteEndPoint = ipe;
             connectArgs.Completed += connectArgs_Completed;
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _socket.ConnectAsync(connectArgs);
+            _socket.ConnectAsync(connectArgs);            
         }
 
         public void SendData(string strData)
@@ -36,6 +49,30 @@ namespace TCPEchoClient
             sendArgs.AcceptSocket = _socket;
             startSend(sendArgs, strData);
         }
+
+        public void CheckServerConection()
+        {
+            Task.Factory.StartNew(() => check());               
+        }
+
+        private bool check()
+        {
+            try
+            {
+                bool bRet = false;
+                do
+                {
+                    Task.Delay(1000);
+                    //bRet = _socket.Poll(10, SelectMode.SelectRead);
+                    bRet = _socket.IsConnected();
+                }
+                while (!bRet);
+            }
+            catch (SocketException) { }
+            Console.WriteLine("connection lost");
+            return true;
+        }
+
         protected override void sendCompleted(SocketAsyncEventArgs sendArgs)
         {
             sendDataPacket(sendArgs);
@@ -49,9 +86,7 @@ namespace TCPEchoClient
                 return;
             }
 
-            //SocketAsyncEventArgs receiveSendEventArgs = new SocketAsyncEventArgs();
-            //receiveSendEventArgs.AcceptSocket = connectArgs.ConnectSocket;
-            //receiveSendEventArgs.Completed += receiveArgs_Completed;
+            CheckServerConection();            
 
             SocketAsyncEventArgs receiveArgs;
             if (!_receiveArgsStack.TryPop(out receiveArgs))
