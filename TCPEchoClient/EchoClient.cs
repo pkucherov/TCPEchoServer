@@ -71,12 +71,8 @@ namespace TCPEchoClient
             SendUserToken token = (SendUserToken)sendArgs.UserToken;
             token.DataPacket = dp;
 
-            sendDataPacket(sendArgs);
-
-            startReceive(sendArgs);
+            sendDataPacket(sendArgs);           
         }
-      
-     
 
         protected override void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
         {

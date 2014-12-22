@@ -61,6 +61,7 @@ namespace Common
             receiveArgs.AcceptSocket = args.AcceptSocket;
             if (args.UserToken != null)
             {
+                Debug.Assert(args.UserToken.GetType() == typeof(ReceiveUserToken));
                 receiveArgs.UserToken = args.UserToken;
             }
 
@@ -93,14 +94,9 @@ namespace Common
         {
             processPacket(receiveArgs);
             startReceive(receiveArgs);
-        } 
-        
-
-       
+        }        
 
         protected abstract void sendCompleted(SocketAsyncEventArgs sendArgs);
-       
-   
 
         protected void processPacket(SocketAsyncEventArgs args)
         {
@@ -150,8 +146,11 @@ namespace Common
                         token.ReadData = buffer;
                     }
 
+                    int nCount = args.BytesTransferred - nProcessedDataCount;
+                    nCount = nCount > (dph.StringSize - token.ReadDataOffset) ? dph.StringSize - token.ReadDataOffset : nCount;
                     Buffer.BlockCopy(args.Buffer, args.Offset + nProcessedDataCount, token.ReadData,
-                        token.ReadDataOffset, args.BytesTransferred - nProcessedDataCount);
+                        token.ReadDataOffset, nCount);
+
                     token.ReadDataOffset += args.BytesTransferred - nProcessedDataCount;
                     token.ProcessedDataCount += args.BytesTransferred - nProcessedDataCount;
                     if (token.ProcessedDataCount >= dph.StringSize + nPacketHeaderSize)
@@ -169,7 +168,8 @@ namespace Common
             }
         }
         protected virtual void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
-        {         
+        {
+            Console.WriteLine("base received = {0}", dp.Data);
         }
 
         protected void sendDataPacket(SocketAsyncEventArgs sendArgs)
@@ -205,7 +205,7 @@ namespace Common
 
                 int nLength = token.ProcessedDataRemains <= nBufferSize ? token.ProcessedDataRemains : nBufferSize;
                 Buffer.BlockCopy(token.DataToSend, token.SentDataOffset, sendArgs.Buffer,
-                    sendArgs.Offset + token.SentDataOffset, nLength);
+                    sendArgs.Offset/* + token.SentDataOffset*/, nLength);
 
                 token.SentDataOffset += nLength;
                 token.ProcessedDataRemains -= nLength;
@@ -214,7 +214,7 @@ namespace Common
                     token.Reset();
                 }
             }
-
+           
             sendArgs.AcceptSocket.SendAsync(sendArgs);
         }
 

@@ -79,6 +79,7 @@ namespace TCPEchoServer
       
         protected override void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
         {
+            Console.WriteLine("server received = {0}", dp.Data);
             startSend(args, dp);
         }
 
