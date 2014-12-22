@@ -38,7 +38,7 @@ namespace TCPEchoClient
         }
         protected override void sendCompleted(SocketAsyncEventArgs sendArgs)
         {
-
+            sendDataPacket(sendArgs);
         }
 
         private void connectArgs_Completed(object sender, SocketAsyncEventArgs connectArgs)

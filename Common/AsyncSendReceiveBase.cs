@@ -13,7 +13,7 @@ namespace Common
         protected ConcurrentStack<SocketAsyncEventArgs> _sendArgsStack;
         protected BufferManager _bufferManager;
 
-        protected const int nBufferSize = 100;
+        protected const int nBufferSize = 20;
         protected const int nMaxSendReceive = 50000;
         protected readonly int nPacketHeaderSize;
 
