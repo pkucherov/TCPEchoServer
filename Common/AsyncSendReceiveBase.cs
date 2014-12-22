@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Text;
 
 namespace Common
 {
@@ -196,11 +197,19 @@ namespace Common
             }
             if (token.ProcessedDataRemains <= nBufferSize && token.SentDataOffset == 0) //data packet fully fit in send buffer
             {
+                //ZeroMemory )) for test purposes
+                byte[] testByte = new byte[nBufferSize];
+                Buffer.BlockCopy(testByte, 0, sendArgs.Buffer, sendArgs.Offset, nBufferSize);
+
                 Buffer.BlockCopy(token.DataToSend, 0, sendArgs.Buffer, sendArgs.Offset, token.DataToSend.Length);
                 token.Reset();
             }
             else
             {// need to separate data packet into several buffers               
+
+                //ZeroMemory )) for test purposes
+                byte[] testByte = new byte[nBufferSize];
+                Buffer.BlockCopy(testByte, 0, sendArgs.Buffer, sendArgs.Offset, nBufferSize);
 
                 int nLength = token.ProcessedDataRemains <= nBufferSize ? token.ProcessedDataRemains : nBufferSize;
                 Buffer.BlockCopy(token.DataToSend, token.SentDataOffset, sendArgs.Buffer,
@@ -213,7 +222,12 @@ namespace Common
                     token.Reset();
                 }
             }
-           
+            byte[] testByte2 = new byte[nBufferSize];
+            Buffer.BlockCopy(sendArgs.Buffer, sendArgs.Offset, testByte2, 0, nBufferSize);
+            string strOut = Encoding.UTF8.GetString(testByte2);
+
+            Console.WriteLine("Send = {0}", strOut);
+
             sendArgs.AcceptSocket.SendAsync(sendArgs);
         }
 
