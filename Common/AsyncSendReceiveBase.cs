@@ -62,8 +62,7 @@ namespace Common
             }
 
             System.Console.WriteLine("transferred = {0}", receiveArgs.BytesTransferred);
-            //processPacket(receiveArgs);
-            //startReceive(receiveArgs);
+         
             receiveCompleted(receiveArgs);
 
             receiveArgs.AcceptSocket = null;
@@ -87,7 +86,7 @@ namespace Common
                 }
                 sendArgsNew.AcceptSocket = sendArgs.AcceptSocket;
                 sendArgsNew.UserToken = token;
-                //sendDataPacket(sendArgsNew);
+              
                 sendCompleted(sendArgsNew);
             }
             sendArgs.AcceptSocket = null;
