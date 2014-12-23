@@ -24,7 +24,8 @@ namespace TCPEchoClient
 
     class EchoClient : AsyncSendReceiveBase
     {
-        private Socket _socket;
+        private Socket _internalSocket;
+        private readonly object _socketLocker = new object();
         private readonly ManualResetEvent _exitEvent = new ManualResetEvent(false);
         private const int ConnectionCheckingTime = 2000;
         private List<IPEndPoint> _endPoints;
@@ -32,6 +33,24 @@ namespace TCPEchoClient
         public ManualResetEvent ExitEvent
         {
             get { return _exitEvent; }
+        }
+
+        private Socket _socket
+        {
+            get
+            {
+                lock (_socketLocker)
+                {
+                    return _internalSocket;    
+                }
+            }
+            set
+            {
+                lock (_socketLocker)
+                {
+                    _internalSocket = value;
+                }
+            }
         }
 
         public EchoClient(List<IPEndPoint> endPoints)
@@ -60,16 +79,16 @@ namespace TCPEchoClient
             startSend(sendArgs, strData);
         }
 
-        public void CheckServerConection()
+        private void checkServerConection()
         {
-            Task.Factory.StartNew(() => check());               
+            Task.Factory.StartNew(check);               
         }
 
-        private bool check()
+        private void check()
         {
             try
             {
-                bool bRet = false;
+                bool bRet;
                 do
                 {
                     bRet = _socket.IsConnected();
@@ -78,7 +97,8 @@ namespace TCPEchoClient
             }
             catch (SocketException) { }
             Console.WriteLine("connection lost");
-            return true;
+            IPEndPoint ipe = null;
+            //Connect(ipe);
         }
 
         protected override void sendCompleted(SocketAsyncEventArgs sendArgs)
@@ -95,7 +115,7 @@ namespace TCPEchoClient
                 return;
             }
 
-            CheckServerConection();            
+            checkServerConection();            
 
             SocketAsyncEventArgs receiveArgs;
             if (!_receiveArgsStack.TryPop(out receiveArgs))
