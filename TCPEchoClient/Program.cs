@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Net;
 
 namespace TCPEchoClient
@@ -8,7 +10,7 @@ namespace TCPEchoClient
         static void Main(string[] args)
         {
             ParametersParser parser = new ParametersParser(args);
-            parser.GetEndPoints();
+            List<IPEndPoint> endPoints = parser.GetEndPoints();
             
 
             EchoClient echoClient = new EchoClient();
@@ -24,22 +26,42 @@ namespace TCPEchoClient
 
     class ParametersParser
     {
+        private List<IPEndPoint> _endPoints = new List<IPEndPoint>();
         public ParametersParser(string[] args)
         {
             foreach (string serverAddress in args)
             {
-                parseAddress(serverAddress);
+                IPEndPoint ep = parseAddress(serverAddress);
+                if (ep != null)
+                {
+                    _endPoints.Add(ep);
+                }
             }
         }
 
-        private void parseAddress(string serverAddress)
+        private IPEndPoint parseAddress(string serverAddress)
         {
+            string[] sa = serverAddress.Split(':');
+            IPEndPoint ep = null;
             
+            if (sa.Length == 2)
+            {
+                IPAddress ip; 
+                if (IPAddress.TryParse(sa[0], out ip))
+                {
+                    int port;
+                    if (int.TryParse(sa[1], NumberStyles.None, NumberFormatInfo.CurrentInfo, out port))
+                    {
+                        ep = new IPEndPoint(ip, port); 
+                    }
+                }
+            }
+            return ep;
         }
 
-        public IPEndPoint[] GetEndPoints()
+        public List<IPEndPoint> GetEndPoints()
         {
-            return null;
+            return _endPoints;
         }
     }
 }
