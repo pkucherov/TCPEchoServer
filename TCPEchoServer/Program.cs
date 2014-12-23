@@ -10,7 +10,7 @@ namespace TCPEchoServer
             EchoServer echoServer = new EchoServer();
             int nPort = 2030;
             echoServer.Start(new IPEndPoint(IPAddress.Any, nPort));
-            Console.WriteLine("Waiting for connection");
+            Console.WriteLine("Waiting for a connection .... Please press any key to exit.");
             Console.ReadLine();
         }
     }

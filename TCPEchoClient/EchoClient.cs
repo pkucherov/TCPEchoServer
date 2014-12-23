@@ -2,7 +2,6 @@
 using System.Net;
 using System.Net.Sockets;
 using Common;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -52,7 +51,7 @@ namespace TCPEchoClient
 
         public void CheckServerConection()
         {
-            Task.Factory.StartNew(() => check());               
+            //Task.Factory.StartNew(() => check());               
         }
 
         private bool check()
@@ -83,6 +82,7 @@ namespace TCPEchoClient
             Console.WriteLine("connectArgs_Completed");
             if (connectArgs.SocketError != SocketError.Success)
             {
+                Console.WriteLine("SocketError");
                 return;
             }
 

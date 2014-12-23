@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Collections.Concurrent;
 using Common;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
 
 namespace TCPEchoServer
@@ -65,7 +63,7 @@ namespace TCPEchoServer
 
             if (args.SocketError != SocketError.Success)
             {
-
+                System.Console.WriteLine("acceptArgs_Completed SocketError");
             }
 
             System.Console.WriteLine("acceptArgs_Completed");
