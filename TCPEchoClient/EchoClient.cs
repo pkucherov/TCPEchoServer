@@ -25,8 +25,8 @@ namespace TCPEchoClient
     class EchoClient : AsyncSendReceiveBase
     {
         private Socket _socket;
-        private readonly ManualResetEvent _exitEvent = new ManualResetEvent(true);
-        private const int ConnectionCheckingTime = 1000;
+        private readonly ManualResetEvent _exitEvent = new ManualResetEvent(false);
+        private const int ConnectionCheckingTime = 20000;
         private List<IPEndPoint> _endPoints;
 
         public ManualResetEvent ExitEvent
@@ -72,10 +72,9 @@ namespace TCPEchoClient
                 bool bRet = false;
                 do
                 {
-                    //bRet = _socket.Poll(10, SelectMode.SelectRead);
                     bRet = _socket.IsConnected();
                 }
-                while (_exitEvent.WaitOne(ConnectionCheckingTime));
+                while (bRet && !_exitEvent.WaitOne(ConnectionCheckingTime));
             }
             catch (SocketException) { }
             Console.WriteLine("connection lost");

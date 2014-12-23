@@ -48,7 +48,7 @@ namespace TCPEchoClient
             Console.WriteLine("TCPEchoClient <Server IP: Port> [Server IP: Port]");
         }
 
-        static IPEndPoint getSelectedServerIP(List<IPEndPoint> endPoints)
+        private static IPEndPoint getSelectedServerIP(List<IPEndPoint> endPoints)
         {
             if (endPoints.Count > 1)
             {
