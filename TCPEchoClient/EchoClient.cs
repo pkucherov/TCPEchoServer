@@ -26,7 +26,7 @@ namespace TCPEchoClient
     {
         private Socket _socket;
         private readonly ManualResetEvent _exitEvent = new ManualResetEvent(false);
-        private const int ConnectionCheckingTime = 20000;
+        private const int ConnectionCheckingTime = 2000;
         private List<IPEndPoint> _endPoints;
 
         public ManualResetEvent ExitEvent

@@ -24,6 +24,7 @@ namespace TCPEchoClient
 
             if (ip != null)
             {
+                Console.WriteLine("Server IP {0} port {1} selected", ip.Address, ip.Port);
                 EchoClient echoClient = new EchoClient(endPoints);
                
                 echoClient.Connect(ip);
