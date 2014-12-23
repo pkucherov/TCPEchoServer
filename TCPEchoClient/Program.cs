@@ -2,25 +2,81 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net;
+using System.Text;
+using System.Threading;
 
 namespace TCPEchoClient
 {
     class Program
     {
+        private const string strExit = "EXIT";
+         
         static void Main(string[] args)
         {
             ParametersParser parser = new ParametersParser(args);
             List<IPEndPoint> endPoints = parser.GetEndPoints();
-            
-
-            EchoClient echoClient = new EchoClient();
-            int nPort = 2030;
-            echoClient.Connect(new IPEndPoint(IPAddress.Parse("192.168.0.155"), nPort));
-            for (; ; )
+            if (endPoints.Count == 0)
             {
-                string strData = Console.ReadLine();
-                echoClient.SendData(strData);
+                printUsage();
             }
+
+            IPEndPoint ip = getSelectedServerIP(endPoints);
+
+            if (ip != null)
+            {
+                EchoClient echoClient = new EchoClient(endPoints);
+               
+                echoClient.Connect(ip);
+                for (;;)
+                {
+                    string strData = Console.ReadLine();
+                    if (string.Compare(strData, strExit, StringComparison.InvariantCultureIgnoreCase) == 0)
+                    {
+                        echoClient.ExitEvent.Set();
+                        return;
+                    }
+
+                    echoClient.SendData(strData);
+                }
+            }
+        }
+
+        private static void printUsage()
+        {
+            Console.WriteLine("No servers listed in command line");
+            Console.WriteLine("Please use following command line syntax:");
+            Console.WriteLine("TCPEchoClient <Server IP: Port> [Server IP: Port]");
+        }
+
+        static IPEndPoint getSelectedServerIP(List<IPEndPoint> endPoints)
+        {
+            if (endPoints.Count > 1)
+            {
+                Console.WriteLine("Following servers are available:");
+
+                int i = 1;
+                foreach (IPEndPoint ipEndPoint in endPoints)
+                {
+                    Console.WriteLine("{0}) {1}:{2} ", i++, ipEndPoint.Address, ipEndPoint.Port);
+                }
+                StringBuilder sb = new StringBuilder();
+                sb.AppendFormat("Please enter 1...{0} to select the server", endPoints.Count);
+                Console.WriteLine(sb.ToString());
+                string strServerKey = Console.ReadLine();
+                int nServerKey;
+                if (int.TryParse(strServerKey, out nServerKey))
+                {
+                    if (nServerKey > 0 && nServerKey <= endPoints.Count)
+                    {
+                        return endPoints[nServerKey - 1];
+                    }
+                }
+            }
+            else
+            {
+                return endPoints[0];
+            }
+            return null;
         }
     }
 

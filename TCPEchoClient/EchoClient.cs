@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using Common;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -23,9 +25,18 @@ namespace TCPEchoClient
     class EchoClient : AsyncSendReceiveBase
     {
         private Socket _socket;
-        public EchoClient()
-        {
+        private readonly ManualResetEvent _exitEvent = new ManualResetEvent(true);
+        private const int ConnectionCheckingTime = 1000;
+        private List<IPEndPoint> _endPoints;
 
+        public ManualResetEvent ExitEvent
+        {
+            get { return _exitEvent; }
+        }
+
+        public EchoClient(List<IPEndPoint> endPoints)
+        {
+            _endPoints = endPoints;
         }
 
         public void Connect(IPEndPoint ipe)
@@ -51,7 +62,7 @@ namespace TCPEchoClient
 
         public void CheckServerConection()
         {
-            //Task.Factory.StartNew(() => check());               
+            Task.Factory.StartNew(() => check());               
         }
 
         private bool check()
@@ -61,11 +72,10 @@ namespace TCPEchoClient
                 bool bRet = false;
                 do
                 {
-                    Task.Delay(1000);
                     //bRet = _socket.Poll(10, SelectMode.SelectRead);
                     bRet = _socket.IsConnected();
                 }
-                while (!bRet);
+                while (_exitEvent.WaitOne(ConnectionCheckingTime));
             }
             catch (SocketException) { }
             Console.WriteLine("connection lost");
