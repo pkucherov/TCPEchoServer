@@ -79,7 +79,7 @@ namespace TCPEchoClient
             startSend(sendArgs, strData);
         }
 
-        private void checkServerConection()
+        private void checkServerConnection()
         {
             Task.Factory.StartNew(check);               
         }
@@ -97,8 +97,14 @@ namespace TCPEchoClient
             }
             catch (SocketException) { }
             Console.WriteLine("connection lost");
-            IPEndPoint ipe = null;
-            //Connect(ipe);
+            IPEndPoint iep = (IPEndPoint)_socket.RemoteEndPoint;
+            
+            _endPoints.Remove(iep);
+            if (_endPoints.Count > 0)
+            {
+                IPEndPoint nextEndPoint = _endPoints[0];
+                Connect(nextEndPoint);
+            }
         }
 
         protected override void sendCompleted(SocketAsyncEventArgs sendArgs)
@@ -108,14 +114,14 @@ namespace TCPEchoClient
 
         private void connectArgs_Completed(object sender, SocketAsyncEventArgs connectArgs)
         {
+            checkServerConnection();     
+
             Console.WriteLine("connectArgs_Completed");
             if (connectArgs.SocketError != SocketError.Success)
             {
                 Console.WriteLine("SocketError");
                 return;
             }
-
-            checkServerConection();            
 
             SocketAsyncEventArgs receiveArgs;
             if (!_receiveArgsStack.TryPop(out receiveArgs))
