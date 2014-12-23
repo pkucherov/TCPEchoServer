@@ -6,6 +6,7 @@ using System.Threading;
 using Common;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.IO;
 
 
 namespace TCPEchoClient
@@ -60,6 +61,8 @@ namespace TCPEchoClient
 
         public void Connect(IPEndPoint ipe)
         {
+            Console.WriteLine("Connecting IP {0} port {1} selected", ipe.Address, ipe.Port);
+
             SocketAsyncEventArgs connectArgs = new SocketAsyncEventArgs();
             connectArgs.RemoteEndPoint = ipe;
             connectArgs.Completed += connectArgs_Completed;
@@ -104,6 +107,13 @@ namespace TCPEchoClient
             {
                 IPEndPoint nextEndPoint = _endPoints[0];
                 Connect(nextEndPoint);
+            }
+            else
+            {
+                ExitEvent.Set();
+                //System.IO.TextReader oldIn = Console.In;
+                //Console.SetIn(new StringReader(Environment.NewLine));
+                //Console.SetIn(oldIn);
             }
         }
 

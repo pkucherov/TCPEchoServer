@@ -4,13 +4,14 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace TCPEchoClient
 {
     class Program
     {
         private const string strExit = "EXIT";
-         
+
         static void Main(string[] args)
         {
             ParametersParser parser = new ParametersParser(args);
@@ -24,21 +25,33 @@ namespace TCPEchoClient
 
             if (ip != null)
             {
-                Console.WriteLine("Server IP {0} port {1} selected", ip.Address, ip.Port);
-                EchoClient echoClient = new EchoClient(endPoints);
-               
-                echoClient.Connect(ip);
-                for (;;)
-                {
-                    string strData = Console.ReadLine();
-                    if (string.Compare(strData, strExit, StringComparison.InvariantCultureIgnoreCase) == 0)
-                    {
-                        echoClient.ExitEvent.Set();
-                        return;
-                    }
 
-                    echoClient.SendData(strData);
-                }
+                Task taskA = Task.Run(() =>
+                {
+                    Console.WriteLine("Server IP {0} port {1} selected", ip.Address, ip.Port);
+                    EchoClient echoClient = new EchoClient(endPoints);
+
+                    echoClient.Connect(ip);
+                    for (;!echoClient.ExitEvent.WaitOne(0);)
+                    {
+                        string strData = Console.ReadLine();
+                        if (string.Compare(strData, strExit, StringComparison.InvariantCultureIgnoreCase) == 0)
+                        {
+                            echoClient.ExitEvent.Set();
+                            return;
+                        }
+                        if (echoClient.ExitEvent.WaitOne(0))
+                        {
+                            return;
+                        }
+
+                        echoClient.SendData(strData);
+                    }
+                });
+
+                taskA.Wait();
+                Console.WriteLine("All finished press ENTER");
+                Console.ReadLine();
             }
         }
 
@@ -100,16 +113,16 @@ namespace TCPEchoClient
         {
             string[] sa = serverAddress.Split(':');
             IPEndPoint ep = null;
-            
+
             if (sa.Length == 2)
             {
-                IPAddress ip; 
+                IPAddress ip;
                 if (IPAddress.TryParse(sa[0], out ip))
                 {
                     int port;
                     if (int.TryParse(sa[1], NumberStyles.None, NumberFormatInfo.CurrentInfo, out port))
                     {
-                        ep = new IPEndPoint(ip, port); 
+                        ep = new IPEndPoint(ip, port);
                     }
                 }
             }
