@@ -1,7 +1,12 @@
 ﻿
 namespace Common
 {
-    public class ReceiveUserToken
+
+    public interface IUserToken
+    {
+        void Reset();
+    }
+    public class ReceiveUserToken : IUserToken
     {
         public int ProcessedDataCount { get; set; }
         public bool IsHeaderReaded { get; set; }
@@ -24,7 +29,7 @@ namespace Common
         }
     }
 
-    public class SendUserToken
+    public class SendUserToken : IUserToken
     {
         public int ProcessedDataRemains { get; set; }        
         public byte[] DataToSend { get; set; }
