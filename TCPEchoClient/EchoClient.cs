@@ -24,14 +24,28 @@ namespace TCPEchoClient
         }
     }
 
-    class ClientSocketInfo
-    {
+    class ClientSocket : Socket
+    {        
+        private IPEndPoint _endPoint;
 
+        public ClientSocket(IPEndPoint ep)
+            : base(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+        {
+            _endPoint = ep;
+        }
+
+        public IPEndPoint ServerEndPoint
+        {
+            get
+            {
+                return _endPoint;
+            }
+        }
     }
 
     class EchoClient : AsyncSendReceiveBase
     {
-        private Socket _internalSocket;
+        private ClientSocket _internalSocket;
         private readonly object _socketLocker = new object();
         private readonly ManualResetEvent _exitEvent = new ManualResetEvent(false);
         private readonly AutoResetEvent _errorEvent = new AutoResetEvent(false);
@@ -44,7 +58,7 @@ namespace TCPEchoClient
             get { return _exitEvent; }
         }
 
-        private Socket _socket
+        private ClientSocket _socket
         {
             get
             {
@@ -75,7 +89,7 @@ namespace TCPEchoClient
             SocketAsyncEventArgs connectArgs = new SocketAsyncEventArgs();
             connectArgs.RemoteEndPoint = ipe;
             connectArgs.Completed += connectArgs_Completed;
-            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _socket = new ClientSocket(ipe);
             _socket.ConnectAsync(connectArgs);
         }
 
@@ -115,7 +129,7 @@ namespace TCPEchoClient
             if (nWaitIndex == 1 || !bConnected)// connection error
             {
                 Debug.WriteLine("Connection lost");
-                IPEndPoint iep = (IPEndPoint)_socket.RemoteEndPoint;
+                IPEndPoint iep = _socket.ServerEndPoint;
 
                 _endPoints.Remove(iep);
                 if (_endPoints.Count > 0)
