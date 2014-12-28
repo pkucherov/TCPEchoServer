@@ -30,7 +30,7 @@ namespace TCPEchoClient
         private readonly ManualResetEvent _exitEvent = new ManualResetEvent(false);
         private readonly AutoResetEvent _errorEvent = new AutoResetEvent(false);
         private readonly WaitHandle[] _events;
-        private const int ConnectionCheckingTime = 20000;
+        private const int ConnectionCheckingTime = 2000;
         private List<IPEndPoint> _endPoints;
 
         public ManualResetEvent ExitEvent
@@ -104,7 +104,7 @@ namespace TCPEchoClient
                 while (bRet && nWaitIndex == WaitHandle.WaitTimeout);
             }
             catch (SocketException) { }
-            Console.WriteLine("connection lost");
+            Debug.WriteLine("Connection lost");
             IPEndPoint iep = (IPEndPoint)_socket.RemoteEndPoint;
             
             _endPoints.Remove(iep);
@@ -115,10 +115,7 @@ namespace TCPEchoClient
             }
             else
             {
-                ExitEvent.Set();
-                //System.IO.TextReader oldIn = Console.In;
-                //Console.SetIn(new StringReader(Environment.NewLine));
-                //Console.SetIn(oldIn);
+                ExitEvent.Set();               
             }
         }
 
@@ -131,10 +128,10 @@ namespace TCPEchoClient
         {
             checkServerConnection();     
 
-            Console.WriteLine("connectArgs_Completed");
+            Debug.WriteLine("connectArgs_Completed");
             if (connectArgs.SocketError != SocketError.Success)
             {
-                Console.WriteLine("SocketError");
+                Debug.WriteLine("SocketError");
                 return;
             }
 

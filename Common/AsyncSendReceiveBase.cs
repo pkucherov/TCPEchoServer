@@ -81,13 +81,13 @@ namespace Common
                 return;
             }
 
-            System.Console.WriteLine("receiveArgs_Completed");
+            Debug.WriteLine("receiveArgs_Completed");
             if (receiveArgs.BytesTransferred == 0)
             {
                 return;
             }
 
-            System.Console.WriteLine("transferred = {0}", receiveArgs.BytesTransferred);
+            Debug.WriteLine("transferred = {0}", receiveArgs.BytesTransferred);
          
             receiveCompleted(receiveArgs);
 
@@ -231,7 +231,7 @@ namespace Common
             Buffer.BlockCopy(sendArgs.Buffer, sendArgs.Offset, testByte2, 0, nBufferSize);
             string strOut = Encoding.UTF8.GetString(testByte2);
 
-            Console.WriteLine("Send = {0}", strOut);
+            Debug.WriteLine("Send = {0}", strOut);
 
             sendArgs.AcceptSocket.SendAsync(sendArgs);
         }
@@ -266,7 +266,6 @@ namespace Common
             }
 
             sendArgs.AcceptSocket = null;
-//            token.Reset();
             sendArgs.UserToken = new SendUserToken();
             _sendArgsStack.Push(sendArgs);
         }

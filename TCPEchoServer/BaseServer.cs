@@ -63,10 +63,10 @@ namespace TCPEchoServer
 
             if (args.SocketError != SocketError.Success)
             {
-                System.Console.WriteLine("acceptArgs_Completed SocketError");
+                Debug.WriteLine("acceptArgs_Completed SocketError");
             }
 
-            System.Console.WriteLine("acceptArgs_Completed");
+            Debug.WriteLine("acceptArgs_Completed");
 
             _clientCollection.Add(args.AcceptSocket);
             startReceive(args);
@@ -77,7 +77,7 @@ namespace TCPEchoServer
       
         protected override void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
         {
-            Console.WriteLine("server received = {0}", dp.Data);
+            Debug.WriteLine("server received = {0}", dp.Data);
             startSend(dp);
         }
 
