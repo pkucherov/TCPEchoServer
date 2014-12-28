@@ -7,6 +7,7 @@ using Common;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.IO;
+using System.Collections;
 
 
 namespace TCPEchoClient
@@ -131,10 +132,9 @@ namespace TCPEchoClient
                 Debug.WriteLine("Connection lost");
                 IPEndPoint iep = _socket.ServerEndPoint;
 
-                _endPoints.Remove(iep);
-                if (_endPoints.Count > 0)
-                {
-                    IPEndPoint nextEndPoint = _endPoints[0];
+                IPEndPoint nextEndPoint = removeAndGetNextEndpoint(iep);
+                if (nextEndPoint != null)
+                {                   
                     Connect(nextEndPoint);
                 }
                 else
@@ -142,6 +142,21 @@ namespace TCPEchoClient
                     ExitEvent.Set();
                 }
             }
+        }
+
+        private IPEndPoint removeAndGetNextEndpoint(IPEndPoint ep)
+        {
+            IPEndPoint nextEndPoint = null;
+            lock (((ICollection)_endPoints).SyncRoot)
+            {
+                _endPoints.Remove(ep);
+                if (_endPoints.Count > 0)
+                {
+                    nextEndPoint = _endPoints[0];
+                }
+            }
+
+            return nextEndPoint;
         }
 
         protected override void sendCompleted(SocketAsyncEventArgs sendArgs)
