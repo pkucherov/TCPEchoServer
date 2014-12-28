@@ -68,11 +68,16 @@ namespace Common
 
             bool willRaiseEvent = receiveArgs.AcceptSocket.ReceiveAsync(receiveArgs);
         }
+        protected virtual void onReceiveError(SocketAsyncEventArgs receiveArgs)
+        {
+
+        }
 
         private void receiveArgs_Completed(object sender, SocketAsyncEventArgs receiveArgs)
         {
             if (receiveArgs.SocketError != SocketError.Success)
             {
+                onReceiveError(receiveArgs);
                 return;
             }
 
@@ -231,8 +236,18 @@ namespace Common
             sendArgs.AcceptSocket.SendAsync(sendArgs);
         }
 
+        protected virtual void onSendError(SocketAsyncEventArgs sendArgs)
+        {
+
+        }
         private void sendArgs_Completed(object sender, SocketAsyncEventArgs sendArgs)
         {
+            if (sendArgs.SocketError != SocketError.Success)
+            {
+                onSendError(sendArgs);
+                return;
+            }
+
             SendUserToken token = (SendUserToken)sendArgs.UserToken;
 
             if (token.ProcessedDataRemains > 0)

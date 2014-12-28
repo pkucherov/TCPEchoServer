@@ -28,7 +28,9 @@ namespace TCPEchoClient
         private Socket _internalSocket;
         private readonly object _socketLocker = new object();
         private readonly ManualResetEvent _exitEvent = new ManualResetEvent(false);
-        private const int ConnectionCheckingTime = 2000;
+        private readonly AutoResetEvent _errorEvent = new AutoResetEvent(false);
+        private readonly WaitHandle[] _events;
+        private const int ConnectionCheckingTime = 20000;
         private List<IPEndPoint> _endPoints;
 
         public ManualResetEvent ExitEvent
@@ -57,6 +59,7 @@ namespace TCPEchoClient
         public EchoClient(List<IPEndPoint> endPoints)
         {
             _endPoints = endPoints;
+            _events = new WaitHandle[] { _exitEvent, _errorEvent };
         }
 
         public void Connect(IPEndPoint ipe)
@@ -92,11 +95,13 @@ namespace TCPEchoClient
             try
             {
                 bool bRet;
+                int nWaitIndex = WaitHandle.WaitTimeout;
                 do
                 {
                     bRet = _socket.IsConnected();
-                }
-                while (bRet && !_exitEvent.WaitOne(ConnectionCheckingTime));
+                    nWaitIndex = WaitHandle.WaitAny(_events, ConnectionCheckingTime);
+                }                
+                while (bRet && nWaitIndex == WaitHandle.WaitTimeout);
             }
             catch (SocketException) { }
             Console.WriteLine("connection lost");
@@ -157,6 +162,16 @@ namespace TCPEchoClient
         protected override void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
         {
             Console.WriteLine(dp.Data);
+        }
+
+        protected override void onReceiveError(SocketAsyncEventArgs receiveArgs)
+        {
+            _errorEvent.Set();
+        }
+
+        protected override void onSendError(SocketAsyncEventArgs sendArgs)
+        {
+            _errorEvent.Set();
         }
     }
 }
