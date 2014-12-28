@@ -16,6 +16,10 @@ namespace TCPEchoServer
                     nPort = nNewPort;
                 }
             }
+            else
+            {
+                Console.WriteLine("Usage: TCPEchoServer.exe [port]");
+            }
             EchoServer echoServer = new EchoServer();
             Console.WriteLine("Using port = {0}", nPort);
             echoServer.Start(new IPEndPoint(IPAddress.Any, nPort));
