@@ -32,12 +32,13 @@ namespace TCPEchoClient
                     EchoClient echoClient = new EchoClient(endPoints);
 
                     echoClient.Connect(ip);
-                    for (;!echoClient.ExitEvent.WaitOne(0);)
+                    while (!echoClient.ExitEvent.WaitOne(0))
                     {
                         string strData = Console.ReadLine();
                         if (string.Compare(strData, strExit, StringComparison.InvariantCultureIgnoreCase) == 0)
                         {
                             echoClient.ExitEvent.Set();
+                            echoClient.Close();                            
                             return;
                         }
                         if (echoClient.ExitEvent.WaitOne(0))

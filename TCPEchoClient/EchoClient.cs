@@ -17,10 +17,16 @@ namespace TCPEchoClient
         {
             try
             {
-                return !(socket.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
+                bool bStatus = socket.Poll(1, SelectMode.SelectRead);
+                return (!(bStatus && socket.Available == 0)) && socket.Connected;
             }
             catch (SocketException) { return false; }
         }
+    }
+
+    class ClientSocketInfo
+    {
+
     }
 
     class EchoClient : AsyncSendReceiveBase
@@ -44,7 +50,7 @@ namespace TCPEchoClient
             {
                 lock (_socketLocker)
                 {
-                    return _internalSocket;    
+                    return _internalSocket;
                 }
             }
             set
@@ -70,14 +76,20 @@ namespace TCPEchoClient
             connectArgs.RemoteEndPoint = ipe;
             connectArgs.Completed += connectArgs_Completed;
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _socket.ConnectAsync(connectArgs);            
+            _socket.ConnectAsync(connectArgs);
+        }
+
+        public void Close()
+        {
+            _socket.Shutdown(SocketShutdown.Both);
+            _socket.Close();
         }
 
         public void SendData(string strData)
-        {            
+        {
             SocketAsyncEventArgs sendArgs;
             if (!_sendArgsStack.TryPop(out sendArgs))
-            { 
+            {
             }
             Debug.Assert(sendArgs.UserToken.GetType() == typeof(SendUserToken));
 
@@ -87,35 +99,34 @@ namespace TCPEchoClient
 
         private void checkServerConnection()
         {
-            Task.Factory.StartNew(check);               
+            Task.Factory.StartNew(check);
         }
 
         private void check()
         {
-            try
+            bool bConnected = false;
+            int nWaitIndex = WaitHandle.WaitTimeout;
+            do
             {
-                bool bRet;
-                int nWaitIndex = WaitHandle.WaitTimeout;
-                do
+                bConnected = _socket.IsConnected();                
+            }
+            while (bConnected && ((nWaitIndex = WaitHandle.WaitAny(_events, ConnectionCheckingTime)) == WaitHandle.WaitTimeout));
+
+            if (nWaitIndex == 1 || !bConnected)// connection error
+            {
+                Debug.WriteLine("Connection lost");
+                IPEndPoint iep = (IPEndPoint)_socket.RemoteEndPoint;
+
+                _endPoints.Remove(iep);
+                if (_endPoints.Count > 0)
                 {
-                    bRet = _socket.IsConnected();
-                    nWaitIndex = WaitHandle.WaitAny(_events, ConnectionCheckingTime);
-                }                
-                while (bRet && nWaitIndex == WaitHandle.WaitTimeout);
-            }
-            catch (SocketException) { }
-            Debug.WriteLine("Connection lost");
-            IPEndPoint iep = (IPEndPoint)_socket.RemoteEndPoint;
-            
-            _endPoints.Remove(iep);
-            if (_endPoints.Count > 0)
-            {
-                IPEndPoint nextEndPoint = _endPoints[0];
-                Connect(nextEndPoint);
-            }
-            else
-            {
-                ExitEvent.Set();               
+                    IPEndPoint nextEndPoint = _endPoints[0];
+                    Connect(nextEndPoint);
+                }
+                else
+                {
+                    ExitEvent.Set();
+                }
             }
         }
 
@@ -126,15 +137,16 @@ namespace TCPEchoClient
 
         private void connectArgs_Completed(object sender, SocketAsyncEventArgs connectArgs)
         {
-            checkServerConnection();     
+            checkServerConnection();
 
             Debug.WriteLine("connectArgs_Completed");
             if (connectArgs.SocketError != SocketError.Success)
             {
+                Console.WriteLine("Connection error");
                 Debug.WriteLine("SocketError");
                 return;
             }
-
+            Console.WriteLine("Connected");
             SocketAsyncEventArgs receiveArgs;
             if (!_receiveArgsStack.TryPop(out receiveArgs))
             {
@@ -144,16 +156,16 @@ namespace TCPEchoClient
 
             startReceive(receiveArgs);
         }
-       
+
         private void startSend(SocketAsyncEventArgs sendArgs, string strData)
         {
             DataPacket dp = new DataPacket();
-            dp.Data = strData;              
-            
+            dp.Data = strData;
+
             SendUserToken token = (SendUserToken)sendArgs.UserToken;
             token.DataPacket = dp;
 
-            sendDataPacket(sendArgs);           
+            sendDataPacket(sendArgs);
         }
 
         protected override void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
