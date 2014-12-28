@@ -51,7 +51,7 @@ namespace TCPEchoClient
                 });
 
                 taskA.Wait();
-                Console.WriteLine("All finished press ENTER");
+                Console.WriteLine("All finished press ENTER to exit");
                 Console.ReadLine();
             }
         }
@@ -65,6 +65,7 @@ namespace TCPEchoClient
 
         private static IPEndPoint getSelectedServerIP(List<IPEndPoint> endPoints)
         {
+            IPEndPoint endPoint = null;
             if (endPoints.Count > 1)
             {
                 Console.WriteLine("Following servers are available:");
@@ -83,15 +84,15 @@ namespace TCPEchoClient
                 {
                     if (nServerKey > 0 && nServerKey <= endPoints.Count)
                     {
-                        return endPoints[nServerKey - 1];
+                        endPoint = endPoints[nServerKey - 1];
                     }
                 }
             }
             else
             {
-                return endPoints[0];
+                endPoint = endPoints[0];
             }
-            return null;
+            return endPoint;
         }
     }
 
