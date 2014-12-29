@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Collections.Concurrent;
+using System.Threading.Tasks;
 using Common;
 using System.Diagnostics;
 
@@ -14,7 +17,7 @@ namespace TCPEchoServer
 
         const int nMaxAccept = 100;
 
-        BlockingCollection<Socket> _clientCollection = new BlockingCollection<Socket>();
+        List<Socket> _clientCollection = new List<Socket>();
 
         public BaseServer()
             : base(new DataProcessor())
@@ -68,8 +71,14 @@ namespace TCPEchoServer
             }
 
             Debug.WriteLine("acceptArgs_Completed");
+           // Task.Factory.StartNew(() =>
+            {
+                lock (((ICollection) _clientCollection).SyncRoot)
+                {
+                    _clientCollection.Add(args.AcceptSocket);
+                }
+            }//);
 
-            _clientCollection.Add(args.AcceptSocket);
             startReceive(args);
 
             args.AcceptSocket = null;
@@ -84,31 +93,43 @@ namespace TCPEchoServer
 
         private void startSend(IDataPacket dpForSend)
         {
-            foreach (Socket client in _clientCollection)
+           // Task.Factory.StartNew(() =>
             {
-                if (client.Connected)
+                lock (((ICollection) _clientCollection).SyncRoot)
                 {
-                    SocketAsyncEventArgs sendArgs;
-                    if (!_sendArgsStack.TryPop(out sendArgs))
+                    List<Socket> aSocketsToDelete = new List<Socket>();
+                    foreach (Socket client in _clientCollection)
                     {
-                        //sendArgs = new SocketAsyncEventArgs();
-                        //var segment = _bufferManager.GetBuffer();
-                        //sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
-                        //sendArgs.Completed += sendArgs_Completed;
+                        if (client.Connected)
+                        {
+                            SocketAsyncEventArgs sendArgs;
+                            if (!_sendArgsStack.TryPop(out sendArgs))
+                            {
+                                //sendArgs = new SocketAsyncEventArgs();
+                                //var segment = _bufferManager.GetBuffer();
+                                //sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
+                                //sendArgs.Completed += sendArgs_Completed;
+                            }
+
+                            Debug.Assert(sendArgs.UserToken.GetType() == typeof (SendUserToken));
+                            sendArgs.AcceptSocket = client;
+
+                            SendUserToken token = (SendUserToken) sendArgs.UserToken;
+                            token.DataPacket = dpForSend;
+                            sendDataPacket(sendArgs);
+                        }
+                        else
+                        {
+                            aSocketsToDelete.Add(client);
+                        }
                     }
-
-                    Debug.Assert(sendArgs.UserToken.GetType() == typeof(SendUserToken));
-                    sendArgs.AcceptSocket = client;
-
-                    SendUserToken token = (SendUserToken)sendArgs.UserToken;
-                    token.DataPacket = dpForSend;
-                    sendDataPacket(sendArgs);
+                    for (int i = 0; i < aSocketsToDelete.Count; i++)
+                    {
+                        Socket socket = aSocketsToDelete[i];
+                        _clientCollection.Remove(socket);
+                    }
                 }
-                else
-                {
-
-                }
-            }
+            }//);
         }
 
         protected override void sendCompleted(SocketAsyncEventArgs sendArgs)
