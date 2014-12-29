@@ -91,7 +91,10 @@ namespace TCPEchoClient
             connectArgs.RemoteEndPoint = ipe;
             connectArgs.Completed += connectArgs_Completed;
             socket = new ClientSocket(ipe);
-            socket.ConnectAsync(connectArgs);
+            if (!socket.ConnectAsync(connectArgs))
+            {
+                connectArgs_Completed(socket, connectArgs);
+            }
         }
 
         public void Close()

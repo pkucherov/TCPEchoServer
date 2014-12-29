@@ -77,7 +77,10 @@ namespace Common
                 receiveArgs.UserToken = args.UserToken;
             }
 
-            bool willRaiseEvent = receiveArgs.AcceptSocket.ReceiveAsync(receiveArgs);
+            if (!receiveArgs.AcceptSocket.ReceiveAsync(receiveArgs))
+            {
+                receiveArgs_Completed(receiveArgs.AcceptSocket, receiveArgs);
+            }
         }
         protected virtual void onReceiveError(SocketAsyncEventArgs receiveArgs)
         {
@@ -251,7 +254,10 @@ namespace Common
 
             Debug.WriteLine("Send = {0}", strOut);
 
-            sendArgs.AcceptSocket.SendAsync(sendArgs);
+            if (!sendArgs.AcceptSocket.SendAsync(sendArgs))
+            {
+                sendArgs_Completed(sendArgs.AcceptSocket, sendArgs);
+            }
         }
 
         protected virtual void onSendError(SocketAsyncEventArgs sendArgs)
