@@ -27,27 +27,40 @@ namespace Common
             _receiveArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
             for (int i = 0; i < nMaxSendReceive; i++)
             {
-                SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
-                receiveArgs.Completed += receiveArgs_Completed;
-                var segment = _bufferManager.GetBuffer();
-                receiveArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
-                receiveArgs.UserToken = new ReceiveUserToken();
+                SocketAsyncEventArgs receiveArgs = createReceiveAsyncEventArgs();
                 _receiveArgsStack.Push(receiveArgs);
             }
 
             _sendArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
             for (int i = 0; i < nMaxSendReceive; i++)
             {
-                SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
-                sendArgs.Completed += sendArgs_Completed;
-                var segment = _bufferManager.GetBuffer();
-                sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
-                sendArgs.UserToken = new SendUserToken();
+                SocketAsyncEventArgs sendArgs = createSendAsyncEventArgs();
                 _sendArgsStack.Push(sendArgs);
             }
 
             _dataProcessor = dp;
         }
+
+        private SocketAsyncEventArgs createSendAsyncEventArgs()
+        {
+            SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
+            sendArgs.Completed += sendArgs_Completed;
+            var segment = _bufferManager.GetBuffer();
+            sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
+            sendArgs.UserToken = new SendUserToken();
+            return sendArgs;
+        }
+
+        private SocketAsyncEventArgs createReceiveAsyncEventArgs()
+        {
+            SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
+            receiveArgs.Completed += receiveArgs_Completed;
+            var segment = _bufferManager.GetBuffer();
+            receiveArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
+            receiveArgs.UserToken = new ReceiveUserToken();
+            return receiveArgs;
+        }
+
         public void Initialize()
         {
 
