@@ -76,7 +76,7 @@ namespace TCPEchoClient
             }
         }
 
-        public EchoClient(List<IPEndPoint> endPoints)
+        public EchoClient(List<IPEndPoint> endPoints):base(new DataProcessor())
         {
             _endPoints = endPoints;
             _events = new WaitHandle[] { _exitEvent, _errorEvent };
@@ -196,9 +196,9 @@ namespace TCPEchoClient
             sendDataPacket(sendArgs);
         }
 
-        protected override void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
+        protected override void onDataPacketReaded(SocketAsyncEventArgs args, IDataPacket dp)
         {
-            Console.WriteLine(dp.Data);
+            Console.WriteLine(((DataPacket)dp).Data);
         }
 
         protected override void onReceiveError(SocketAsyncEventArgs receiveArgs)

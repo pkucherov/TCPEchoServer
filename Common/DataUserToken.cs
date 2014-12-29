@@ -10,7 +10,7 @@ namespace Common
     {
         public int ProcessedDataCount { get; set; }
         public bool IsHeaderReaded { get; set; }
-        public DataPacketHeader DataPacketHeader { get; set; }
+        public IDataPacketHeader DataPacketHeader { get; set; }
         public byte[] ReadData { get; set; }
         public int ReadDataOffset { get; set; }
 
@@ -35,7 +35,7 @@ namespace Common
         public byte[] DataToSend { get; set; }
         public int SentDataOffset { get; set; }
 
-        public DataPacket DataPacket { get; set; }
+        public IDataPacket DataPacket { get; set; }
 
         public SendUserToken()
         {

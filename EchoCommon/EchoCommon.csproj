@@ -4,16 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4BB6C341-3D33-4F4E-8078-5B17A5F4B51D}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{B562B3C3-BF47-4C79-A2DA-DC29496B842E}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TCPEchoClient</RootNamespace>
-    <AssemblyName>TCPEchoClient</AssemblyName>
+    <RootNamespace>EchoCommon</RootNamespace>
+    <AssemblyName>EchoCommon</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -41,21 +39,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EchoClient.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="DataPacket.cs" />
+    <Compile Include="DataProcessor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{43993f4e-def6-43be-9449-7a8b30d9e185}</Project>
       <Name>Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\EchoCommon\EchoCommon.csproj">
-      <Project>{b562b3c3-bf47-4c79-a2da-dc29496b842e}</Project>
-      <Name>EchoCommon</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

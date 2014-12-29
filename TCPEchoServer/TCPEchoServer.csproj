@@ -54,6 +54,10 @@
       <Project>{43993f4e-def6-43be-9449-7a8b30d9e185}</Project>
       <Name>Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\EchoCommon\EchoCommon.csproj">
+      <Project>{b562b3c3-bf47-4c79-a2da-dc29496b842e}</Project>
+      <Name>EchoCommon</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -16,7 +16,7 @@ namespace TCPEchoServer
 
         BlockingCollection<Socket> _clientCollection = new BlockingCollection<Socket>();
 
-        public BaseServer()
+        public BaseServer():base(new DataProcessor())
         {            
             _acceptArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
             for (int i = 0; i < nMaxAccept; i++)
@@ -75,13 +75,13 @@ namespace TCPEchoServer
             _acceptArgsStack.Push(args);
         }       
       
-        protected override void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
+        protected override void onDataPacketReaded(SocketAsyncEventArgs args, IDataPacket dp)
         {
-            Debug.WriteLine("server received = {0}", dp.Data);
+            Debug.WriteLine("server received = {0}", ((DataPacket)dp).Data);
             startSend(dp);
         }
 
-        private void startSend(DataPacket dpForSend)
+        private void startSend(IDataPacket dpForSend)
         {
             foreach (Socket client in _clientCollection)
             {

@@ -17,9 +17,11 @@ namespace Common
         protected const int nMaxSendReceive = 50000;
         protected readonly int nPacketHeaderSize;
 
-        protected AsyncSendReceiveBase()
+        protected IDataProcessor _dataProcessor;
+
+        protected AsyncSendReceiveBase(IDataProcessor dp)
         {
-            nPacketHeaderSize = Marshal.SizeOf(typeof(DataPacketHeader));
+            nPacketHeaderSize = dp.DataPacketHeaderSize;
 
             _bufferManager = new BufferManager(2 * nMaxSendReceive, nBufferSize);
 
@@ -44,6 +46,8 @@ namespace Common
                 sendArgs.UserToken = new SendUserToken();
                 _sendArgsStack.Push(sendArgs);
             }
+
+            _dataProcessor = dp;
         }
         public void Initialize()
         {
@@ -97,26 +101,30 @@ namespace Common
   
         protected virtual void receiveCompleted(SocketAsyncEventArgs receiveArgs)
         {
-            processPacket(receiveArgs);
+            readDataPacket(receiveArgs);
             startReceive(receiveArgs);
         }        
 
         protected abstract void sendCompleted(SocketAsyncEventArgs sendArgs);
 
-        protected void processPacket(SocketAsyncEventArgs args)
+        protected void readDataPacket(SocketAsyncEventArgs args)
         {
             ReceiveUserToken token = (ReceiveUserToken)args.UserToken;
             bool bDataPacketReaded = false;
             int nProcessedDataCount = 0;
-            DataPacketHeader dph = new DataPacketHeader();
-            DataPacket dp = new DataPacket();
+            IDataPacketHeader dph = _dataProcessor.CreateDataPacketHeader();
+            IDataPacket dp = _dataProcessor.CreateDataPacket();
             if (!token.IsHeaderReaded)
             {
                 if (args.BytesTransferred >= nPacketHeaderSize)
                 {
                     if (args.Buffer != null)
                     {
-                        dph.Deserialize(args.Buffer, args.Offset, args.Count);
+                        byte[] newdata = new byte[args.Count];
+                        Buffer.BlockCopy(args.Buffer, args.Offset, newdata, 0, args.Count);
+
+                        dph.Deserialize(newdata);
+
                         token.IsHeaderReaded = true;
                         token.ProcessedDataCount += nPacketHeaderSize;
                         nProcessedDataCount += nPacketHeaderSize;
@@ -129,12 +137,12 @@ namespace Common
                 dph = token.DataPacketHeader;
             }
 
-            if (args.BytesTransferred >= token.ProcessedDataCount + dph.StringSize)
+            if (args.BytesTransferred >= token.ProcessedDataCount + dph.DataPacketSize)
             {
                 if (args.Buffer != null)
                 {
-                    byte[] buffer = new byte[dph.StringSize];
-                    Buffer.BlockCopy(args.Buffer, args.Offset + Marshal.SizeOf(typeof(DataPacketHeader)), buffer, 0, dph.StringSize);
+                    byte[] buffer = new byte[dph.DataPacketSize];
+                    Buffer.BlockCopy(args.Buffer, args.Offset + _dataProcessor.DataPacketHeaderSize, buffer, 0, dph.DataPacketSize);
 
                     dp.Deserialize(buffer);
                     bDataPacketReaded = true;
@@ -147,18 +155,18 @@ namespace Common
                     byte[] buffer = null;
                     if (token.ReadData == null)
                     {
-                        buffer = new byte[dph.StringSize];
+                        buffer = new byte[dph.DataPacketSize];
                         token.ReadData = buffer;
                     }
 
                     int nCount = args.BytesTransferred - nProcessedDataCount;
-                    nCount = nCount > (dph.StringSize - token.ReadDataOffset) ? dph.StringSize - token.ReadDataOffset : nCount;
+                    nCount = nCount > (dph.DataPacketSize - token.ReadDataOffset) ? dph.DataPacketSize - token.ReadDataOffset : nCount;
                     Buffer.BlockCopy(args.Buffer, args.Offset + nProcessedDataCount, token.ReadData,
                         token.ReadDataOffset, nCount);
 
                     token.ReadDataOffset += args.BytesTransferred - nProcessedDataCount;
                     token.ProcessedDataCount += args.BytesTransferred - nProcessedDataCount;
-                    if (token.ProcessedDataCount >= dph.StringSize + nPacketHeaderSize)
+                    if (token.ProcessedDataCount >= dph.DataPacketSize + nPacketHeaderSize)
                     {
                         dp.Deserialize(token.ReadData);
                         bDataPacketReaded = true;
@@ -172,7 +180,7 @@ namespace Common
                 onDataPacketReaded(args, dp);                
             }
         }
-        protected virtual void onDataPacketReaded(SocketAsyncEventArgs args, DataPacket dp)
+        protected virtual void onDataPacketReaded(SocketAsyncEventArgs args, IDataPacket dp)
         {            
         }
 
@@ -181,14 +189,13 @@ namespace Common
             SendUserToken token = (SendUserToken)sendArgs.UserToken;
             if (token.DataToSend == null)
             {
-                DataPacket dp = token.DataPacket;
+                IDataPacket dp = token.DataPacket;
                 byte[] dataBuffer = dp.Serialize();
 
-                DataPacketHeader dph = new DataPacketHeader();
+                IDataPacketHeader dph = _dataProcessor.CreateDataPacketHeader();
 
-                dph.MagicKey = 0xFFACBBFA;
-                dph.Version = 0x0100;
-                dph.StringSize = dataBuffer.Length;
+                
+                dph.DataPacketSize = dataBuffer.Length;
 
                 byte[] headerBuffer = dph.Serialize();
                 int nSize = dataBuffer.Length + headerBuffer.Length;

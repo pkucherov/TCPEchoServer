@@ -41,7 +41,7 @@
   <ItemGroup>
     <Compile Include="AsyncSendReceiveBase.cs" />
     <Compile Include="BufferManager.cs" />
-    <Compile Include="DataPacket.cs" />
+    <Compile Include="DataInterfaces.cs" />
     <Compile Include="DataUserToken.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
