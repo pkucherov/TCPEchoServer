@@ -2,9 +2,11 @@
 {
     public interface IDataProcessor
     {
+        int DataPacketHeaderSize { get; }
+
         IDataPacketHeader CreateDataPacketHeader();
         IDataPacket CreateDataPacket();
-        int DataPacketHeaderSize { get; }
+        bool IsValidHeader(IDataPacketHeader header);
     }
 
     public interface IDataPacket

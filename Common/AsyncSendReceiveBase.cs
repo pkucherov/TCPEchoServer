@@ -123,11 +123,13 @@ namespace Common
                         Buffer.BlockCopy(args.Buffer, args.Offset, newdata, 0, args.Count);
 
                         dph.Deserialize(newdata);
-
-                        token.IsHeaderReaded = true;
-                        token.ProcessedDataCount += _nPacketHeaderSize;
-                        nProcessedDataCount += _nPacketHeaderSize;
-                        token.DataPacketHeader = dph;
+                        if (_dataProcessor.IsValidHeader(dph))
+                        {
+                            token.IsHeaderReaded = true;
+                            token.ProcessedDataCount += _nPacketHeaderSize;
+                            nProcessedDataCount += _nPacketHeaderSize;
+                            token.DataPacketHeader = dph;
+                        }
                     }
                 }
             }
@@ -136,42 +138,47 @@ namespace Common
                 dph = token.DataPacketHeader;
             }
 
-            if (args.BytesTransferred >= token.ProcessedDataCount + dph.DataPacketSize)
+            if (token.IsHeaderReaded)
             {
-                if (args.Buffer != null)
+                if (args.BytesTransferred >= token.ProcessedDataCount + dph.DataPacketSize)
                 {
-                    byte[] buffer = new byte[dph.DataPacketSize];
-                    Buffer.BlockCopy(args.Buffer, args.Offset + _dataProcessor.DataPacketHeaderSize, buffer, 0, dph.DataPacketSize);
-
-                    dp.Deserialize(buffer);
-                    bDataPacketReaded = true;
-                }
-            }
-            else
-            {
-                if (args.Buffer != null)
-                {
-                    if (token.ReadData == null)
+                    if (args.Buffer != null)
                     {
                         byte[] buffer = new byte[dph.DataPacketSize];
-                        token.ReadData = buffer;
-                    }
+                        Buffer.BlockCopy(args.Buffer, args.Offset + _dataProcessor.DataPacketHeaderSize, buffer, 0,
+                            dph.DataPacketSize);
 
-                    int nCount = args.BytesTransferred - nProcessedDataCount;
-                    nCount = nCount > (dph.DataPacketSize - token.ReadDataOffset) ? dph.DataPacketSize - token.ReadDataOffset : nCount;
-                    Buffer.BlockCopy(args.Buffer, args.Offset + nProcessedDataCount, token.ReadData,
-                        token.ReadDataOffset, nCount);
-
-                    token.ReadDataOffset += args.BytesTransferred - nProcessedDataCount;
-                    token.ProcessedDataCount += args.BytesTransferred - nProcessedDataCount;
-                    if (token.ProcessedDataCount >= dph.DataPacketSize + _nPacketHeaderSize)
-                    {
-                        dp.Deserialize(token.ReadData);
+                        dp.Deserialize(buffer);
                         bDataPacketReaded = true;
                     }
                 }
-            }
+                else
+                {
+                    if (args.Buffer != null)
+                    {
+                        if (token.ReadData == null)
+                        {
+                            byte[] buffer = new byte[dph.DataPacketSize];
+                            token.ReadData = buffer;
+                        }
 
+                        int nCount = args.BytesTransferred - nProcessedDataCount;
+                        nCount = nCount > (dph.DataPacketSize - token.ReadDataOffset)
+                            ? dph.DataPacketSize - token.ReadDataOffset
+                            : nCount;
+                        Buffer.BlockCopy(args.Buffer, args.Offset + nProcessedDataCount, token.ReadData,
+                            token.ReadDataOffset, nCount);
+
+                        token.ReadDataOffset += args.BytesTransferred - nProcessedDataCount;
+                        token.ProcessedDataCount += args.BytesTransferred - nProcessedDataCount;
+                        if (token.ProcessedDataCount >= dph.DataPacketSize + _nPacketHeaderSize)
+                        {
+                            dp.Deserialize(token.ReadData);
+                            bDataPacketReaded = true;
+                        }
+                    }
+                }
+            }
             if (bDataPacketReaded)
             {
                 token.Reset();
