@@ -39,16 +39,10 @@ namespace TCPEchoServer
             int backlog = 100;
             _listener.Listen(backlog);
 
-            bool bRet = startAccept();
-
-            if (!bRet)
-            {
-
-            }
-
+            startAccept();
         }
 
-        private bool startAccept()
+        private void startAccept()
         {
             SocketAsyncEventArgs acceptArgs;
             if (!_acceptArgsStack.TryPop(out acceptArgs))
@@ -57,8 +51,10 @@ namespace TCPEchoServer
                 acceptArgs.Completed += acceptArgs_Completed;
             }
 
-            bool bRet = _listener.AcceptAsync(acceptArgs);
-            return bRet;
+            if(!_listener.AcceptAsync(acceptArgs))
+            {
+                acceptArgs_Completed(_listener, acceptArgs);
+            }            
         }
 
         private void acceptArgs_Completed(object sender, SocketAsyncEventArgs args)
