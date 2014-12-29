@@ -53,8 +53,8 @@ namespace TCPEchoServer
             SocketAsyncEventArgs acceptArgs;
             if (!_acceptArgsStack.TryPop(out acceptArgs))
             {
-                //acceptArgs = new SocketAsyncEventArgs();
-                //acceptArgs.Completed += new EventHandler<SocketAsyncEventArgs>(acceptArgs_Completed);
+                acceptArgs = new SocketAsyncEventArgs();
+                acceptArgs.Completed += acceptArgs_Completed;
             }
 
             bool bRet = _listener.AcceptAsync(acceptArgs);
@@ -106,10 +106,7 @@ namespace TCPEchoServer
                             SocketAsyncEventArgs sendArgs;
                             if (!_sendArgsStack.TryPop(out sendArgs))
                             {
-                                //sendArgs = new SocketAsyncEventArgs();
-                                //var segment = _bufferManager.GetBuffer();
-                                //sendArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
-                                //sendArgs.Completed += sendArgs_Completed;
+                                sendArgs = createSendAsyncEventArgs();
                             }
 
                             Debug.Assert(sendArgs.UserToken.GetType() == typeof (SendUserToken));

@@ -105,6 +105,7 @@ namespace TCPEchoClient
             SocketAsyncEventArgs sendArgs;
             if (!_sendArgsStack.TryPop(out sendArgs))
             {
+                sendArgs = createSendAsyncEventArgs();
             }
             Debug.Assert(sendArgs.UserToken.GetType() == typeof(SendUserToken));
 
@@ -179,6 +180,7 @@ namespace TCPEchoClient
             SocketAsyncEventArgs receiveArgs;
             if (!_receiveArgsStack.TryPop(out receiveArgs))
             {
+                receiveArgs = createReceiveAsyncEventArgs();
             }
             Debug.Assert(receiveArgs.UserToken.GetType() == typeof(ReceiveUserToken));
             receiveArgs.AcceptSocket = connectArgs.ConnectSocket;

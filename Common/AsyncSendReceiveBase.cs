@@ -41,7 +41,7 @@ namespace Common
             _dataProcessor = dp;
         }
 
-        private SocketAsyncEventArgs createSendAsyncEventArgs()
+        protected SocketAsyncEventArgs createSendAsyncEventArgs()
         {
             SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
             sendArgs.Completed += sendArgs_Completed;
@@ -51,7 +51,7 @@ namespace Common
             return sendArgs;
         }
 
-        private SocketAsyncEventArgs createReceiveAsyncEventArgs()
+        protected SocketAsyncEventArgs createReceiveAsyncEventArgs()
         {
             SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
             receiveArgs.Completed += receiveArgs_Completed;
@@ -60,17 +60,13 @@ namespace Common
             receiveArgs.UserToken = new ReceiveUserToken();
             return receiveArgs;
         }
-
-        public void Initialize()
-        {
-
-        }
+       
         protected void startReceive(SocketAsyncEventArgs args)
         {
             SocketAsyncEventArgs receiveArgs;
             if (!_receiveArgsStack.TryPop(out receiveArgs))
             {
-
+                receiveArgs = createReceiveAsyncEventArgs();
             }
             Debug.Assert(receiveArgs.UserToken.GetType() == typeof(ReceiveUserToken));
 
@@ -277,7 +273,7 @@ namespace Common
                 SocketAsyncEventArgs sendArgsNew;
                 if (!_sendArgsStack.TryPop(out sendArgsNew))
                 {
-
+                    sendArgsNew = createSendAsyncEventArgs();
                 }
                 Debug.Assert(sendArgsNew.UserToken.GetType() == typeof(SendUserToken));
 
