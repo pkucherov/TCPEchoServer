@@ -14,13 +14,13 @@ namespace Common
 
         protected const int nBufferSize = 20;
         protected const int nMaxSendReceive = 50000;
-        protected readonly int nPacketHeaderSize;
+        protected readonly int _nPacketHeaderSize;
 
         protected IDataProcessor _dataProcessor;
 
         protected AsyncSendReceiveBase(IDataProcessor dp)
         {
-            nPacketHeaderSize = dp.DataPacketHeaderSize;
+            _nPacketHeaderSize = dp.DataPacketHeaderSize;
 
             _bufferManager = new BufferManager(2 * nMaxSendReceive, nBufferSize);
 
@@ -115,7 +115,7 @@ namespace Common
             IDataPacket dp = _dataProcessor.CreateDataPacket();
             if (!token.IsHeaderReaded)
             {
-                if (args.BytesTransferred >= nPacketHeaderSize)
+                if (args.BytesTransferred >= _nPacketHeaderSize)
                 {
                     if (args.Buffer != null)
                     {
@@ -125,8 +125,8 @@ namespace Common
                         dph.Deserialize(newdata);
 
                         token.IsHeaderReaded = true;
-                        token.ProcessedDataCount += nPacketHeaderSize;
-                        nProcessedDataCount += nPacketHeaderSize;
+                        token.ProcessedDataCount += _nPacketHeaderSize;
+                        nProcessedDataCount += _nPacketHeaderSize;
                         token.DataPacketHeader = dph;
                     }
                 }
@@ -151,10 +151,9 @@ namespace Common
             {
                 if (args.Buffer != null)
                 {
-                    byte[] buffer = null;
                     if (token.ReadData == null)
                     {
-                        buffer = new byte[dph.DataPacketSize];
+                        byte[] buffer = new byte[dph.DataPacketSize];
                         token.ReadData = buffer;
                     }
 
@@ -165,7 +164,7 @@ namespace Common
 
                     token.ReadDataOffset += args.BytesTransferred - nProcessedDataCount;
                     token.ProcessedDataCount += args.BytesTransferred - nProcessedDataCount;
-                    if (token.ProcessedDataCount >= dph.DataPacketSize + nPacketHeaderSize)
+                    if (token.ProcessedDataCount >= dph.DataPacketSize + _nPacketHeaderSize)
                     {
                         dp.Deserialize(token.ReadData);
                         bDataPacketReaded = true;

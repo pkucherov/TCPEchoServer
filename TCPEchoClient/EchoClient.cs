@@ -58,7 +58,7 @@ namespace TCPEchoClient
             get { return _exitEvent; }
         }
 
-        private ClientSocket _socket
+        private ClientSocket socket
         {
             get
             {
@@ -90,14 +90,14 @@ namespace TCPEchoClient
             SocketAsyncEventArgs connectArgs = new SocketAsyncEventArgs();
             connectArgs.RemoteEndPoint = ipe;
             connectArgs.Completed += connectArgs_Completed;
-            _socket = new ClientSocket(ipe);
-            _socket.ConnectAsync(connectArgs);
+            socket = new ClientSocket(ipe);
+            socket.ConnectAsync(connectArgs);
         }
 
         public void Close()
         {
-            _socket.Shutdown(SocketShutdown.Both);
-            _socket.Close();
+            socket.Shutdown(SocketShutdown.Both);
+            socket.Close();
         }
 
         public void SendData(string strData)
@@ -108,7 +108,7 @@ namespace TCPEchoClient
             }
             Debug.Assert(sendArgs.UserToken.GetType() == typeof(SendUserToken));
 
-            sendArgs.AcceptSocket = _socket;
+            sendArgs.AcceptSocket = socket;
             startSend(sendArgs, strData);
         }
 
@@ -119,18 +119,18 @@ namespace TCPEchoClient
 
         private void check()
         {
-            bool bConnected = false;
+            bool bConnected;
             int nWaitIndex = WaitHandle.WaitTimeout;
             do
             {
-                bConnected = _socket.IsConnected();
+                bConnected = socket.IsConnected();
             }
             while (bConnected && ((nWaitIndex = WaitHandle.WaitAny(_events, ConnectionCheckingTime)) == WaitHandle.WaitTimeout));
 
             if (nWaitIndex == 1 || !bConnected)// connection error
             {
                 Debug.WriteLine("Connection lost");
-                IPEndPoint iep = _socket.ServerEndPoint;
+                IPEndPoint iep = socket.ServerEndPoint;
 
                 IPEndPoint nextEndPoint = removeAndGetNextEndpoint(iep);
                 if (nextEndPoint != null)

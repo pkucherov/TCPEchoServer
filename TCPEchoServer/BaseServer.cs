@@ -12,12 +12,12 @@ namespace TCPEchoServer
 {
     abstract class BaseServer : AsyncSendReceiveBase
     {
-        Socket _listener;
-        ConcurrentStack<SocketAsyncEventArgs> _acceptArgsStack;
+        private Socket _listener;
+        private ConcurrentStack<SocketAsyncEventArgs> _acceptArgsStack;
 
-        const int nMaxAccept = 100;
+        private const int nMaxAccept = 100;
 
-        List<Socket> _clientCollection = new List<Socket>();
+        private List<Socket> _clientCollection = new List<Socket>();
 
         public BaseServer()
             : base(new DataProcessor())
@@ -26,7 +26,7 @@ namespace TCPEchoServer
             for (int i = 0; i < nMaxAccept; i++)
             {
                 SocketAsyncEventArgs acceptArgs = new SocketAsyncEventArgs();
-                acceptArgs.Completed += new EventHandler<SocketAsyncEventArgs>(acceptArgs_Completed);
+                acceptArgs.Completed += acceptArgs_Completed;
 
                 _acceptArgsStack.Push(acceptArgs);
             }
