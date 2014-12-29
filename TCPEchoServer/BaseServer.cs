@@ -11,13 +11,14 @@ namespace TCPEchoServer
     {
         Socket _listener;
         ConcurrentStack<SocketAsyncEventArgs> _acceptArgsStack;
-      
+
         const int nMaxAccept = 100;
 
         BlockingCollection<Socket> _clientCollection = new BlockingCollection<Socket>();
 
-        public BaseServer():base(new DataProcessor())
-        {            
+        public BaseServer()
+            : base(new DataProcessor())
+        {
             _acceptArgsStack = new ConcurrentStack<SocketAsyncEventArgs>();
             for (int i = 0; i < nMaxAccept; i++)
             {
@@ -25,7 +26,7 @@ namespace TCPEchoServer
                 acceptArgs.Completed += new EventHandler<SocketAsyncEventArgs>(acceptArgs_Completed);
 
                 _acceptArgsStack.Push(acceptArgs);
-            }          
+            }
         }
 
         public void Start(IPEndPoint ipe)
@@ -73,8 +74,8 @@ namespace TCPEchoServer
 
             args.AcceptSocket = null;
             _acceptArgsStack.Push(args);
-        }       
-      
+        }
+
         protected override void onDataPacketReaded(SocketAsyncEventArgs args, IDataPacket dp)
         {
             Debug.WriteLine("server received = {0}", ((DataPacket)dp).Data);
@@ -105,11 +106,11 @@ namespace TCPEchoServer
                 }
                 else
                 {
-                    
+
                 }
             }
         }
-        
+
         protected override void sendCompleted(SocketAsyncEventArgs sendArgs)
         {
             sendDataPacket(sendArgs);

@@ -1,7 +1,6 @@
 ﻿
 namespace Common
 {
-
     public interface IUserToken
     {
         void Reset();
@@ -31,22 +30,21 @@ namespace Common
 
     public class SendUserToken : IUserToken
     {
-        public int ProcessedDataRemains { get; set; }        
+        public int ProcessedDataRemains { get; set; }
         public byte[] DataToSend { get; set; }
         public int SentDataOffset { get; set; }
-
         public IDataPacket DataPacket { get; set; }
 
         public SendUserToken()
         {
-            ProcessedDataRemains = 0;           
+            ProcessedDataRemains = 0;
         }
 
         public void Reset()
         {
             ProcessedDataRemains = 0;
             DataToSend = null;
-            SentDataOffset = 0;            
+            SentDataOffset = 0;
         }
     }
 }

@@ -8,7 +8,7 @@ namespace TCPEchoServer
         static void Main(string[] args)
         {
             int nPort = 2030;
-            if (args.Length >0)
+            if (args.Length > 0)
             {
                 int nNewPort;
                 if (int.TryParse(args[0], out nNewPort))

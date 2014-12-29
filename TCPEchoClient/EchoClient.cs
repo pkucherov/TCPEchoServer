@@ -25,7 +25,7 @@ namespace TCPEchoClient
     }
 
     class ClientSocket : Socket
-    {        
+    {
         private IPEndPoint _endPoint;
 
         public ClientSocket(IPEndPoint ep)
@@ -76,7 +76,8 @@ namespace TCPEchoClient
             }
         }
 
-        public EchoClient(List<IPEndPoint> endPoints):base(new DataProcessor())
+        public EchoClient(List<IPEndPoint> endPoints)
+            : base(new DataProcessor())
         {
             _endPoints = endPoints;
             _events = new WaitHandle[] { _exitEvent, _errorEvent };
@@ -122,7 +123,7 @@ namespace TCPEchoClient
             int nWaitIndex = WaitHandle.WaitTimeout;
             do
             {
-                bConnected = _socket.IsConnected();                
+                bConnected = _socket.IsConnected();
             }
             while (bConnected && ((nWaitIndex = WaitHandle.WaitAny(_events, ConnectionCheckingTime)) == WaitHandle.WaitTimeout));
 
@@ -133,7 +134,7 @@ namespace TCPEchoClient
 
                 IPEndPoint nextEndPoint = removeAndGetNextEndpoint(iep);
                 if (nextEndPoint != null)
-                {                   
+                {
                     Connect(nextEndPoint);
                 }
                 else

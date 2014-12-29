@@ -37,7 +37,7 @@ namespace TCPEchoClient
                         if (string.Compare(strData, strExit, StringComparison.InvariantCultureIgnoreCase) == 0)
                         {
                             echoClient.ExitEvent.Set();
-                            echoClient.Close();                            
+                            echoClient.Close();
                             return;
                         }
                         if (echoClient.ExitEvent.WaitOne(0))

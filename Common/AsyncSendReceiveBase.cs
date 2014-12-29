@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Text;
 
@@ -91,19 +90,19 @@ namespace Common
             }
 
             Debug.WriteLine("transferred = {0}", receiveArgs.BytesTransferred);
-         
+
             receiveCompleted(receiveArgs);
 
             receiveArgs.AcceptSocket = null;
             _receiveArgsStack.Push(receiveArgs);
 
         }
-  
+
         protected virtual void receiveCompleted(SocketAsyncEventArgs receiveArgs)
         {
             readDataPacket(receiveArgs);
             startReceive(receiveArgs);
-        }        
+        }
 
         protected abstract void sendCompleted(SocketAsyncEventArgs sendArgs);
 
@@ -177,11 +176,11 @@ namespace Common
             if (bDataPacketReaded)
             {
                 token.Reset();
-                onDataPacketReaded(args, dp);                
+                onDataPacketReaded(args, dp);
             }
         }
         protected virtual void onDataPacketReaded(SocketAsyncEventArgs args, IDataPacket dp)
-        {            
+        {
         }
 
         protected void sendDataPacket(SocketAsyncEventArgs sendArgs)
@@ -193,8 +192,6 @@ namespace Common
                 byte[] dataBuffer = dp.Serialize();
 
                 IDataPacketHeader dph = _dataProcessor.CreateDataPacketHeader();
-
-                
                 dph.DataPacketSize = dataBuffer.Length;
 
                 byte[] headerBuffer = dph.Serialize();
