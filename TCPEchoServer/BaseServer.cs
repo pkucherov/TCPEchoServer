@@ -71,13 +71,14 @@ namespace TCPEchoServer
             }
 
             Debug.WriteLine("acceptArgs_Completed");
-           // Task.Factory.StartNew(() =>
+            Socket newClient = args.AcceptSocket;
+            Task.Factory.StartNew(() =>
             {
                 lock (((ICollection) _clientCollection).SyncRoot)
                 {
-                    _clientCollection.Add(args.AcceptSocket);
+                    _clientCollection.Add(newClient);
                 }
-            }//);
+            });
 
             startReceive(args);
 
@@ -93,7 +94,7 @@ namespace TCPEchoServer
 
         private void startSend(IDataPacket dpForSend)
         {
-           // Task.Factory.StartNew(() =>
+            Task.Factory.StartNew(() =>
             {
                 lock (((ICollection) _clientCollection).SyncRoot)
                 {
@@ -129,7 +130,7 @@ namespace TCPEchoServer
                         _clientCollection.Remove(socket);
                     }
                 }
-            }//);
+            });
         }
 
         protected override void sendCompleted(SocketAsyncEventArgs sendArgs)
