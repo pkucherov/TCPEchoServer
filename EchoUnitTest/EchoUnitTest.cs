@@ -38,6 +38,10 @@ namespace EchoUnitTest
                 echoClient.SendData(strTestData);
                 echoClient.DataReady.WaitOne();
                 Assert.IsTrue(string.Equals(strTestData, echoClient.ReceivedData));
+                string strTestData2 = "JjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890AaBbCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890AaBbCcDdEeFfGgHh";
+                echoClient.SendData(strTestData2);
+                echoClient.DataReady.WaitOne();
+                Assert.IsTrue(string.Equals(strTestData2, echoClient.ReceivedData));
                 exitEvent.Set();
             });
             taskServer.Wait();
