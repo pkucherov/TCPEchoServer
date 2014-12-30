@@ -34,12 +34,19 @@ namespace TCPEchoServer
 
         public void Start(IPEndPoint ipe)
         {
-            _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _listener.Bind(ipe);
-            int backlog = 100;
-            _listener.Listen(backlog);
+            try
+            {
+                _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                _listener.Bind(ipe);
+                int backlog = 100;
+                _listener.Listen(backlog);
 
-            startAccept();
+                startAccept();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Server error: {0}", ex.Message);
+            }
         }
 
         private void startAccept()
