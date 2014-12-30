@@ -17,7 +17,7 @@ namespace TCPEchoServer
 
         private const int nMaxAccept = 100;
 
-        private List<Socket> _clientCollection = new List<Socket>();
+        protected List<Socket> _clientCollection = new List<Socket>();
 
         public BaseServer()
             : base(new DataProcessor())
@@ -89,50 +89,7 @@ namespace TCPEchoServer
             _acceptArgsStack.Push(args);
         }
 
-        protected override void onDataPacketReaded(SocketAsyncEventArgs args, IDataPacket dp)
-        {
-            Debug.WriteLine("server received = {0}", ((DataPacket)dp).Data);
-            startSend(dp);
-        }
-
-        private void startSend(IDataPacket dpForSend)
-        {
-            Task.Factory.StartNew(() =>
-            {
-                lock (((ICollection) _clientCollection).SyncRoot)
-                {
-                    List<Socket> aSocketsToDelete = new List<Socket>();
-                    foreach (Socket client in _clientCollection)
-                    {
-                        if (client.Connected)
-                        {
-                            SocketAsyncEventArgs sendArgs;
-                            if (!_sendArgsStack.TryPop(out sendArgs))
-                            {
-                                sendArgs = createSendAsyncEventArgs();
-                            }
-
-                            Debug.Assert(sendArgs.UserToken.GetType() == typeof (SendUserToken));
-                            sendArgs.AcceptSocket = client;
-
-                            SendUserToken token = (SendUserToken) sendArgs.UserToken;
-                            token.DataPacket = dpForSend;
-                            sendDataPacket(sendArgs);
-                        }
-                        else
-                        {
-                            aSocketsToDelete.Add(client);
-                        }
-                    }
-                    for (int i = 0; i < aSocketsToDelete.Count; i++)
-                    {
-                        Socket socket = aSocketsToDelete[i];
-                        _clientCollection.Remove(socket);
-                    }
-                }
-            });
-        }
-
+       
         protected override void sendCompleted(SocketAsyncEventArgs sendArgs)
         {
             sendDataPacket(sendArgs);
