@@ -18,14 +18,16 @@ namespace EchoUnitTest
         public void SendReceiveEcho()
         {
             ManualResetEvent exitEvent = new ManualResetEvent(false);
+            ManualResetEvent serverStarted = new ManualResetEvent(false);
             Task taskServer = Task.Run(() =>
             {
                 EchoServer echoServer = new EchoServer();
                 echoServer.Start(new IPEndPoint(IPAddress.Any, 2030));
+                serverStarted.Set();
                 exitEvent.WaitOne();
             });
 
-            taskServer.Wait(2000);
+            serverStarted.WaitOne();
             Task taskClient = Task.Run(() =>
             {
                 List<IPEndPoint> endPoints = new List<IPEndPoint>();
