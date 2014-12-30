@@ -18,6 +18,7 @@ namespace TCPEchoClient
             if (endPoints.Count == 0)
             {
                 printUsage();
+                return;
             }
 
             IPEndPoint ip = getSelectedServerIP(endPoints);
@@ -60,6 +61,8 @@ namespace TCPEchoClient
             Console.WriteLine("No servers listed in command line");
             Console.WriteLine("Please use following command line syntax:");
             Console.WriteLine("TCPEchoClient <Server IP: Port> [Server IP: Port]");
+            Console.WriteLine("Press Enter to exit.");
+            Console.ReadLine();
         }
 
         private static IPEndPoint getSelectedServerIP(List<IPEndPoint> endPoints)
