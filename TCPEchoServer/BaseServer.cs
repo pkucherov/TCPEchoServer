@@ -10,7 +10,7 @@ using System.Diagnostics;
 
 namespace TCPEchoServer
 {
-    abstract class BaseServer : AsyncSendReceiveBase
+    public abstract class BaseServer : AsyncSendReceiveBase
     {
         private Socket _listener;
         private ConcurrentStack<SocketAsyncEventArgs> _acceptArgsStack;

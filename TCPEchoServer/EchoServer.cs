@@ -7,7 +7,7 @@ using Common;
 
 namespace TCPEchoServer
 {
-    class EchoServer: BaseServer
+    public class EchoServer: BaseServer
     {   
 
         public EchoServer()

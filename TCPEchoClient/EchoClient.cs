@@ -43,7 +43,7 @@ namespace TCPEchoClient
         }
     }
 
-    class EchoClient : AsyncSendReceiveBase
+    public class EchoClient : AsyncSendReceiveBase
     {
         private ClientSocket _internalSocket;
         private readonly object _socketLocker = new object();
