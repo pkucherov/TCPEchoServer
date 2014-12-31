@@ -150,10 +150,10 @@ namespace EchoUnitTest
         public void MultipleClientsSingleThread2()
         {
             EchoServer echoServer = new EchoServer();
-            echoServer.Start(new IPEndPoint(IPAddress.Any, 2032));
+            echoServer.Start(new IPEndPoint(IPAddress.Any, 2033));
 
             List<IPEndPoint> endPoints = new List<IPEndPoint>();
-            IPEndPoint ep = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2032);
+            IPEndPoint ep = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2033);
             endPoints.Add(ep);
             List<EchoTestClient> aClients = new List<EchoTestClient>();
             for (int i = 0; i < 10; i++)
