@@ -223,20 +223,11 @@ namespace Common
             }
             if (token.ProcessedDataRemains <= nBufferSize && token.SentDataOffset == 0) //data packet fully fit in send buffer
             {
-                //ZeroMemory )) for test purposes
-                byte[] testByte = new byte[nBufferSize];
-                Buffer.BlockCopy(testByte, 0, sendArgs.Buffer, sendArgs.Offset, nBufferSize);
-
                 Buffer.BlockCopy(token.DataToSend, 0, sendArgs.Buffer, sendArgs.Offset, token.DataToSend.Length);
                 token.Reset();
             }
             else
             {// need to separate data packet into several buffers               
-
-                //ZeroMemory )) for test purposes
-                byte[] testByte = new byte[nBufferSize];
-                Buffer.BlockCopy(testByte, 0, sendArgs.Buffer, sendArgs.Offset, nBufferSize);
-
                 int nLength = token.ProcessedDataRemains <= nBufferSize ? token.ProcessedDataRemains : nBufferSize;
                 Buffer.BlockCopy(token.DataToSend, token.SentDataOffset, sendArgs.Buffer,
                     sendArgs.Offset, nLength);
