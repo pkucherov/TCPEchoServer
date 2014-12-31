@@ -146,6 +146,36 @@ namespace EchoUnitTest
                 Assert.IsTrue(string.Equals(strTestData2, echoClient.ReceivedData));
             }
         }
+        [TestMethod]
+        public void MultipleClientsSingleThread2()
+        {
+            EchoServer echoServer = new EchoServer();
+            echoServer.Start(new IPEndPoint(IPAddress.Any, 2032));
+
+            List<IPEndPoint> endPoints = new List<IPEndPoint>();
+            IPEndPoint ep = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2032);
+            endPoints.Add(ep);
+            List<EchoTestClient> aClients = new List<EchoTestClient>();
+            for (int i = 0; i < 10; i++)
+            {
+                EchoTestClient echoClient = new EchoTestClient(endPoints);
+                echoClient.Connect(endPoints[0]);
+                aClients.Add(echoClient);
+            }
+           
+            string strTestData2 = "JjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890AaBbCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890AaBbCcDdEeFfGgHh";
+            for (int j = 0; j < 10; j++)
+            {
+                EchoTestClient clientMaster = aClients[j];
+                clientMaster.SendData(strTestData2);
+                for (int i = 0; i < 10; i++)
+                {
+                    EchoTestClient echoClient = aClients[i];
+                    echoClient.DataReady.WaitOne();
+                    Assert.IsTrue(string.Equals(strTestData2, echoClient.ReceivedData));
+                }
+            }
+        }
     }
 
     class EchoTestClient : EchoClient
