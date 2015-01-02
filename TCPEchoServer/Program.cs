@@ -25,6 +25,7 @@ namespace TCPEchoServer
             echoServer.Start(new IPEndPoint(IPAddress.Any, nPort));
             Console.WriteLine("Waiting for a connection .... Please press ENTER to exit.");
             Console.ReadLine();
+            echoServer.CloseConnections();
         }
     }
 }

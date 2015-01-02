@@ -94,5 +94,20 @@ namespace TCPEchoServer
         {
             sendDataPacket(sendArgs);
         }
+
+        public void CloseConnections()
+        {
+            lock (((ICollection)_clientCollection).SyncRoot)
+            {             
+                foreach (Socket client in _clientCollection)
+                {
+                    if (client != null)
+                    {
+                        client.Shutdown(SocketShutdown.Both);
+                        client.Close();
+                    }
+                }
+            }
+        }
     }
 }
